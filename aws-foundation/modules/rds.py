@@ -1,10 +1,10 @@
 import pulumi
 import pulumi_aws as paws
-from config import CBPulumiConfig
+from config import AWSPulumiConfig
 from constants import Constants as CONST
 import os
 
-def _define_security_group(config: CBPulumiConfig, vpc_id: str) -> pulumi.Output:
+def _define_security_group(config: AWSPulumiConfig, vpc_id: str) -> pulumi.Output:
     sec_group = paws.ec2.SecurityGroup(f'{config.resource_prefix}-rds',
         vpc_id=vpc_id,
         name_prefix=config.resource_prefix,
@@ -24,7 +24,7 @@ def _define_security_group(config: CBPulumiConfig, vpc_id: str) -> pulumi.Output
     )
     return sec_group
 
-def _define_db_subnet_group(config: CBPulumiConfig, subnets: list) -> pulumi.Output:
+def _define_db_subnet_group(config: AWSPulumiConfig, subnets: list) -> pulumi.Output:
     subnet_group = paws.rds.SubnetGroup(config.resource_prefix,
         name_prefix=config.resource_prefix,
         subnet_ids=[s.id for s in subnets],
@@ -32,7 +32,7 @@ def _define_db_subnet_group(config: CBPulumiConfig, subnets: list) -> pulumi.Out
     )
     return subnet_group
 
-def _define_parameter_group(config: CBPulumiConfig) -> pulumi.Output:
+def _define_parameter_group(config: AWSPulumiConfig) -> pulumi.Output:
     parameters = []
     if config.rds['parameters']:
         for k, v in config.rds['parameters'].items():
@@ -45,7 +45,7 @@ def _define_parameter_group(config: CBPulumiConfig) -> pulumi.Output:
     )
     return param_group
 
-def define_rds_cluster(config: CBPulumiConfig, vpc_data: dict) -> pulumi.Output:
+def define_rds_cluster(config: AWSPulumiConfig, vpc_data: dict) -> pulumi.Output:
     parameter_group = _define_parameter_group(config)
     subnet_group = _define_db_subnet_group(config, vpc_data['private_subnets'])
     security_group = _define_security_group(config, vpc_data['vpc_id'])

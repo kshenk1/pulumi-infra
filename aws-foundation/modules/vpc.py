@@ -1,7 +1,7 @@
 import pulumi
 import pulumi_aws as paws
 import ipaddress
-from config import CBPulumiConfig
+from config import AWSPulumiConfig
 
 azs = paws.get_availability_zones(state='available')
 
@@ -17,7 +17,7 @@ def __slice_up_vpc_subnets(vpc_cidr: str, subnet_bits: int) -> list:
     return subs
 
 ## Define the VPC
-def define_vpc(config: CBPulumiConfig) -> bool:
+def define_vpc(config: AWSPulumiConfig) -> bool:
     vpc = paws.ec2.Vpc(config.resource_prefix,
         cidr_block=config.vpc['cidr'],
         tags=config.tags,

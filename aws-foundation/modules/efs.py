@@ -1,11 +1,11 @@
 import pulumi
 import pulumi_aws as paws
-from config import CBPulumiConfig
+from config import AWSPulumiConfig
 import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
 
-def _define_security_group(config: CBPulumiConfig, vpc_data: dict) -> pulumi.Output:
+def _define_security_group(config: AWSPulumiConfig, vpc_data: dict) -> pulumi.Output:
     efs_sec = paws.ec2.SecurityGroup(f'{config.resource_prefix}-efs',
         vpc_id=vpc_data['vpc_id'],
         name_prefix=config.resource_prefix,
@@ -25,7 +25,7 @@ def _define_security_group(config: CBPulumiConfig, vpc_data: dict) -> pulumi.Out
     )
     return efs_sec
 
-def define_efs(config: CBPulumiConfig, vpc_data: dict) -> bool:
+def define_efs(config: AWSPulumiConfig, vpc_data: dict) -> bool:
 
     efs_sec = _define_security_group(config, vpc_data)
 

@@ -1,7 +1,7 @@
 import pulumi
 import pulumi_aws as paws
 import pulumi_eks as peks
-from config import CBPulumiConfig
+from config import AWSPulumiConfig
 from constants import Constants as CONST
 import os
 
@@ -65,7 +65,7 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
         'cluster_role': cluster_role
     }
 
-def define_cluster(config: CBPulumiConfig, vpc: dict) -> pulumi.Output:
+def define_cluster(config: AWSPulumiConfig, vpc: dict) -> pulumi.Output:
     
     _attachments = __cluster_role_attachments(config.resource_prefix, config.tags)
     cluster_policy_attachments = _attachments['attachments']
@@ -115,7 +115,7 @@ def define_cluster(config: CBPulumiConfig, vpc: dict) -> pulumi.Output:
 
     return cluster
 
-def _define_launch_template(config: CBPulumiConfig) -> pulumi.Output:
+def _define_launch_template(config: AWSPulumiConfig) -> pulumi.Output:
     ## Setting up for a launch template based on data from the yaml config
     instance_requirements_args = paws.ec2.LaunchTemplateInstanceRequirementsArgs(
         memory_mib=paws.ec2.LaunchTemplateInstanceRequirementsMemoryMibArgs(
@@ -141,7 +141,7 @@ def _define_launch_template(config: CBPulumiConfig) -> pulumi.Output:
     )
     return launch_template
 
-def define_node_groups(config: CBPulumiConfig, cluster: pulumi.Output, vpc: dict) -> list:
+def define_node_groups(config: AWSPulumiConfig, cluster: pulumi.Output, vpc: dict) -> list:
 
     ## The standard node group policy...
     node_role = paws.iam.Role(f'{config.resource_prefix}-nodegroup',

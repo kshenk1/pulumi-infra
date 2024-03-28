@@ -2,7 +2,7 @@ import yaml
 
 from constants import Constants as CONST
 
-class CBPulumiConfig(object):
+class AWSPulumiConfig(object):
 
     def __init__(self, config_file: str) -> object:
         with open(file=config_file, mode="r", encoding="utf-8") as f:

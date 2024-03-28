@@ -5,11 +5,11 @@ import modules.efs as efs
 import modules.eks as eks
 import modules.rds as rds
 
-from config import CBPulumiConfig
+from config import AWSPulumiConfig
 
 config_file = 'stack-config.yaml'
 
-config = CBPulumiConfig(config_file)
+config = AWSPulumiConfig(config_file)
 
 vpc_data = vpc.define_vpc(config)
 
@@ -22,4 +22,3 @@ if config.eks_enabled():
 
 if config.rds_enabled():
     rds_instance = rds.define_rds_cluster(config, vpc_data)
-    
