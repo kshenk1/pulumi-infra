@@ -7,7 +7,9 @@
 Let's cut right to the chase: [Terraform vs Pulumi](https://www.pulumi.com/docs/concepts/vs/terraform/). Read up a bit, and come back. This was my initial journey with pulumi....
 
 ### All configuration is driven from the `stack-config.yaml` file.
-`__main__.py` is the entrypoint for Pulumi. In here (or more specifically in `config.py`), we read in that yaml file which dictates how resources are created.
+**The `ROOT` directory to refer to during this doc is `pulumi-infra/aws-foundation`.**
+
+`__main__.py` is the entrypoint for Pulumi. In `config.py` we read in that yaml file which dictates how resources are created.
 
 ## VPC Configuration
 You can define the vpc CIDR, subnet size, and number of public/private subnets. 
