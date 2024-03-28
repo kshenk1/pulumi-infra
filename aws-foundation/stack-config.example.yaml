@@ -1,10 +1,10 @@
 ---
-resource_prefix: 'kshenk-pulumi'
-domain_name: aws.kshenk.ps.beescloud.com
+resource_prefix: 'pulumi-test'
+domain_name: aws.<example>.ps.beescloud.com
 aws:
   tags:
-    cb-owner: 'professional-services'
-    cb-user: 'kshenk'
+    cb-owner: '<my-org>'
+    cb-user: '<a-user>'
     cb-environment: 'development'
     cb-purpose: 'testing'
 
@@ -45,7 +45,7 @@ aws:
     family: 'mysql8.0'
     instance_class: 'db.m5d.xlarge'
     port: 3306
-    db_name: db_cb_default
+    db_name: db_default
     db_user: db_user_default
     subdomain: db   ## we end up creating {subdomain}.{resource_prefix}.{tld}
     tld: internal.com
