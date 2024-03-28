@@ -1,0 +1,54 @@
+---
+resource_prefix: 'kshenk-pulumi'
+domain_name: aws.kshenk.ps.beescloud.com
+aws:
+  tags:
+    cb-owner: 'professional-services'
+    cb-user: 'kshenk'
+    cb-environment: 'development'
+    cb-purpose: 'testing'
+
+  ## Currently, changing anything here after infra is stood up will cause just about
+  ## everything to be rebuilt/recreated
+  vpc:
+    cidr: '172.31.0.0/16'
+    subnet_size: 24 # We will attempt to use the vpc.cidr to carve out subnets of this size
+    num_private_subnets: 2 # the number of private subnets we'll attempt to create
+    num_public_subnets: 2 # the number of PUBLIC subnets we'll attempt to create
+
+  efs:
+    enabled: true
+    transition_to_ia: "AFTER_30_DAYS"
+
+  eks:
+    enabled: true
+    version: '1.29'
+    desired_nodes_per_group: 2 # used for desired AND min
+    max_nodes_per_group: 10
+    node_groups:
+      instance_types: # The order in which AWS will attempt to create instances from
+        - m6a.xlarge
+        - m6a.2xlarge
+        - t3a.xlarge
+      memory_mib:
+        min: 8192
+        max: 16384
+      vcpu_count:
+        min: 4
+        max: 8
+
+  rds:
+    enabled: true
+    storage: 75
+    engine: 'mysql'
+    engine_version: '8.0.35'
+    family: 'mysql8.0'
+    instance_class: 'db.m5d.xlarge'
+    port: 3306
+    db_name: db_cb_default
+    db_user: db_user_default
+    subdomain: db   ## we end up creating {subdomain}.{resource_prefix}.{tld}
+    tld: internal.com
+    parameters:
+      character_set_server: utf8
+      character_set_client: utf8

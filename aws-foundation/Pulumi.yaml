@@ -1,0 +1,10 @@
+name: aws-foundation
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: The bare-bones aws structure to do stuff in
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: ""
