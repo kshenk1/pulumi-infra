@@ -17,7 +17,7 @@ def _define_security_group(config: CBPulumiConfig, vpc_id: str) -> pulumi.Output
         ingress=[paws.ec2.SecurityGroupEgressArgs(
             from_port=config.rds['port'],
             to_port=config.rds['port'],
-            protocol='-tcp',
+            protocol='tcp',
             cidr_blocks=[config.vpc['cidr']]
         )],
         tags=config.tags

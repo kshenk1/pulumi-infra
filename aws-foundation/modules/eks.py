@@ -65,7 +65,7 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
         'cluster_role': cluster_role
     }
 
-def define_cluster(config: CBPulumiConfig, vpc: dict):
+def define_cluster(config: CBPulumiConfig, vpc: dict) -> pulumi.Output:
     
     _attachments = __cluster_role_attachments(config.resource_prefix, config.tags)
     cluster_policy_attachments = _attachments['attachments']
@@ -115,15 +115,7 @@ def define_cluster(config: CBPulumiConfig, vpc: dict):
 
     return cluster
 
-def define_node_groups(config: CBPulumiConfig, cluster: pulumi.Output, vpc: dict):
-
-    ## The standard node group policy...
-    node_role = paws.iam.Role(f'{config.resource_prefix}-nodegroup',
-        assume_role_policy=__get_datafile('nodegroup.role-policy.json'))
-
-    ## Attachments for the managed policies
-    node_policy_attachments = __policy_attachments(config.resource_prefix, 'nodegroups', node_role, 20)
-
+def _define_launch_template(config: CBPulumiConfig) -> pulumi.Output:
     ## Setting up for a launch template based on data from the yaml config
     instance_requirements_args = paws.ec2.LaunchTemplateInstanceRequirementsArgs(
         memory_mib=paws.ec2.LaunchTemplateInstanceRequirementsMemoryMibArgs(
@@ -147,6 +139,19 @@ def define_node_groups(config: CBPulumiConfig, cluster: pulumi.Output, vpc: dict
         )],
         tags=config.tags
     )
+    return launch_template
+
+def define_node_groups(config: CBPulumiConfig, cluster: pulumi.Output, vpc: dict) -> list:
+
+    ## The standard node group policy...
+    node_role = paws.iam.Role(f'{config.resource_prefix}-nodegroup',
+        assume_role_policy=__get_datafile('nodegroup.role-policy.json'))
+
+    ## Attachments for the managed policies
+    node_policy_attachments = __policy_attachments(config.resource_prefix, 'nodegroups', node_role, 20)
+
+    ## Launch template to be used to define nodes in our node groups
+    launch_template = _define_launch_template(config)
 
     ## Required tags for k8s scheduling
     ng_tags = {
@@ -188,3 +193,5 @@ def define_node_groups(config: CBPulumiConfig, cluster: pulumi.Output, vpc: dict
         node_groups.append(group)
 
     pulumi.export('nodegroups', [n.node_group_name for n in node_groups])
+
+    return node_groups

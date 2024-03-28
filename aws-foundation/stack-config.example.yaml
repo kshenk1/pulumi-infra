@@ -26,7 +26,7 @@ aws:
     desired_nodes_per_group: 2 # used for desired AND min
     max_nodes_per_group: 10
     node_groups:
-      instance_types: # The order in which AWS will attempt to create instances from
+      instance_types: # AWS will attempt to create instances from
         - m6a.xlarge
         - m6a.2xlarge
         - t3a.xlarge

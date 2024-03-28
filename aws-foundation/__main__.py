@@ -22,3 +22,4 @@ if config.eks_enabled():
 
 if config.rds_enabled():
     rds_instance = rds.define_rds_cluster(config, vpc_data)
+    

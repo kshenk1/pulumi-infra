@@ -5,8 +5,7 @@ import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
 
-def define_efs(config: CBPulumiConfig, vpc_data: dict) -> bool:
-
+def _define_security_group(config: CBPulumiConfig, vpc_data: dict) -> pulumi.Output:
     efs_sec = paws.ec2.SecurityGroup(f'{config.resource_prefix}-efs',
         vpc_id=vpc_data['vpc_id'],
         name_prefix=config.resource_prefix,
@@ -24,6 +23,11 @@ def define_efs(config: CBPulumiConfig, vpc_data: dict) -> bool:
         )],
         tags=config.tags
     )
+    return efs_sec
+
+def define_efs(config: CBPulumiConfig, vpc_data: dict) -> bool:
+
+    efs_sec = _define_security_group(config, vpc_data)
 
     efs = paws.efs.FileSystem(config.resource_prefix,
         creation_token=config.resource_prefix,
