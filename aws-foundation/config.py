@@ -19,6 +19,12 @@ class AWSPulumiConfig(object):
         self.efs = config.get('aws')['efs']
         self.eks = config.get('aws')['eks']
 
+    def instance_requested(self) -> bool:
+        return self.rds.get('aws_rds_type') == 'instance'
+
+    def cluster_requested(self) -> bool:
+        return self.rds.get('aws_rds_type') == 'cluster'
+
     def rds_enabled(self) -> bool:
         return self.rds.get('enabled')
     

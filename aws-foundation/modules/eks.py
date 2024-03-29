@@ -101,7 +101,7 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> pulumi.Output:
         cluster_security_group=sec_group,
         private_subnet_ids=[s.id for s in vpc['private_subnets']],
         create_oidc_provider=True,
-        service_role=cluster_role,
+        instance_roles=[cluster_role],
     )
 
     cluster = peks.Cluster(config.resource_prefix,

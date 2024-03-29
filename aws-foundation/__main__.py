@@ -3,7 +3,7 @@
 import modules.vpc as vpc
 import modules.efs as efs
 import modules.eks as eks
-import modules.rds as rds
+# NOTE CONDITIONAL IMPORTS BELOW
 
 from config import AWSPulumiConfig
 
@@ -21,4 +21,11 @@ if config.eks_enabled():
     node_groups = eks.define_node_groups(config, cluster_obj, vpc_data)
 
 if config.rds_enabled():
-    rds_instance = rds.define_rds_cluster(config, vpc_data)
+    if config.instance_requested():
+        import modules.rds_instance as rds
+    elif config.cluster_requested():
+        import modules.rds_cluster as rds
+    else:
+        raise ValueError('Unable to load an RDS module. Check your rds.aws_rds_type value')
+
+    rds = rds.define_rds(config, vpc_data)

@@ -18,7 +18,7 @@ def __slice_up_vpc_subnets(vpc_cidr: str, subnet_bits: int) -> list:
 
 ## Define the VPC
 def define_vpc(config: AWSPulumiConfig) -> bool:
-    vpc = paws.ec2.Vpc(config.resource_prefix,
+    vpc = paws.ec2.Vpc(f'{config.resource_prefix}-vpc',
         cidr_block=config.vpc['cidr'],
         tags=config.tags,
         enable_dns_hostnames=True)
@@ -43,7 +43,7 @@ def define_vpc(config: AWSPulumiConfig) -> bool:
     }
     _tags = config.tags | _add_tags
     for i in range(num_private_subnets):    
-        sub = paws.ec2.Subnet(f'{config.resource_prefix}-{i}',
+        sub = paws.ec2.Subnet(f'{config.resource_prefix}-privnet-{i}',
             vpc_id=vpc.id,
             availability_zone=azs.names[i],
             cidr_block=subnets[i],
@@ -65,7 +65,7 @@ def define_vpc(config: AWSPulumiConfig) -> bool:
         except IndexError:
             az = azs.names[i-num_private_subnets]
 
-        sub = paws.ec2.Subnet(f'{config.resource_prefix}-{i}',
+        sub = paws.ec2.Subnet(f'{config.resource_prefix}-pubnet-{i}',
             vpc_id=vpc.id,
             availability_zone=az,
             cidr_block=subnets[i],
