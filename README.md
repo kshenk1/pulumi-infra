@@ -21,7 +21,7 @@ If `efs.enabled`: One EFS is created at this time.
 If `eks.enabled`: One EKS Cluster is created, driven by the specifications made available in the `stack-config.yaml`
 
 ### RDS Configuration
-If `rds.enabled`: One RDS Cluster (currently no additional instances) is created. I have only tested **mysql** so far...
+If `rds.enabled`: One RDS _database_ is created. I have only tested **mysql** so far... You can choose to bring up an RDS **Instance**, or **Cluster** via `rds.aws_rds_type` which can be any of: `[ cluster | instance ]`.
 
 # How to make it all go
 * [Install Pulumi](https://www.pulumi.com/docs/install/)

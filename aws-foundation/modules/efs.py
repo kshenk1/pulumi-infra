@@ -26,7 +26,6 @@ def _define_security_group(config: AWSPulumiConfig, vpc_data: dict) -> pulumi.Ou
     return efs_sec
 
 def define_efs(config: AWSPulumiConfig, vpc_data: dict) -> bool:
-
     efs_sec = _define_security_group(config, vpc_data)
 
     efs = paws.efs.FileSystem(config.resource_prefix,

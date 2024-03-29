@@ -66,7 +66,6 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
     }
 
 def define_cluster(config: AWSPulumiConfig, vpc: dict) -> pulumi.Output:
-    
     _attachments = __cluster_role_attachments(config.resource_prefix, config.tags)
     cluster_policy_attachments = _attachments['attachments']
     cluster_role = _attachments['cluster_role']
@@ -151,7 +150,6 @@ def _define_launch_template(config: AWSPulumiConfig) -> pulumi.Output:
     return launch_template
 
 def define_node_groups(config: AWSPulumiConfig, cluster: pulumi.Output, node_role: pulumi.Output, vpc: dict) -> list:
-
     ## Attachments for the managed policies
     node_policy_attachments = __policy_attachments(config.resource_prefix, 'nodegroups', node_role, 20)
 
