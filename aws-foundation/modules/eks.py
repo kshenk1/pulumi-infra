@@ -89,8 +89,14 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> pulumi.Output:
         tags=config.tags
     )
 
-    _tags = config.tags | {'Name': config.resource_prefix}
+    ## The standard node group policy...
+    ## This needs to be created here because:
+    ## Exception: A managed node group cannot be created without first setting its role in the cluster's instanceRoles
+    node_role = paws.iam.Role(f'{config.resource_prefix}-nodegroup',
+        name=f'{config.resource_prefix}-nodegroup',
+        assume_role_policy=__get_datafile('nodegroup.role-policy.json'))
 
+    _tags = config.tags | {'Name': config.resource_prefix}
     cluster_args = peks.ClusterArgs(
         enabled_cluster_log_types=["api", "audit", "authenticator", "controllerManager", "scheduler"],
         name=config.resource_prefix,
@@ -101,7 +107,7 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> pulumi.Output:
         cluster_security_group=sec_group,
         private_subnet_ids=[s.id for s in vpc['private_subnets']],
         create_oidc_provider=True,
-        instance_roles=[cluster_role],
+        instance_roles=[cluster_role, node_role],
     )
 
     cluster = peks.Cluster(config.resource_prefix,
@@ -113,7 +119,10 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> pulumi.Output:
 
     pulumi.export('cluster_name', cluster.name)
 
-    return cluster
+    return {
+        'cluster': cluster,
+        'node_role': node_role
+    }
 
 def _define_launch_template(config: AWSPulumiConfig) -> pulumi.Output:
     ## Setting up for a launch template based on data from the yaml config
@@ -141,11 +150,7 @@ def _define_launch_template(config: AWSPulumiConfig) -> pulumi.Output:
     )
     return launch_template
 
-def define_node_groups(config: AWSPulumiConfig, cluster: pulumi.Output, vpc: dict) -> list:
-
-    ## The standard node group policy...
-    node_role = paws.iam.Role(f'{config.resource_prefix}-nodegroup',
-        assume_role_policy=__get_datafile('nodegroup.role-policy.json'))
+def define_node_groups(config: AWSPulumiConfig, cluster: pulumi.Output, node_role: pulumi.Output, vpc: dict) -> list:
 
     ## Attachments for the managed policies
     node_policy_attachments = __policy_attachments(config.resource_prefix, 'nodegroups', node_role, 20)
@@ -192,6 +197,6 @@ def define_node_groups(config: AWSPulumiConfig, cluster: pulumi.Output, vpc: dic
         )
         node_groups.append(group)
 
-    pulumi.export('nodegroups', [n.node_group_name for n in node_groups])
+    pulumi.export('nodegroups', [n.node_group.node_group_name for n in node_groups])
 
     return node_groups

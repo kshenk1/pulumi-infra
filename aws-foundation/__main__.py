@@ -17,8 +17,9 @@ if config.efs_enabled():
     efs_data = efs.define_efs(config, vpc_data)
 
 if config.eks_enabled():
-    cluster_obj = eks.define_cluster(config, vpc_data)
-    node_groups = eks.define_node_groups(config, cluster_obj, vpc_data)
+    _data = eks.define_cluster(config, vpc_data)
+    cluster_obj = _data['cluster']
+    node_groups = eks.define_node_groups(config, cluster_obj, _data['node_role'], vpc_data)
 
 if config.rds_enabled():
     if config.instance_requested():
