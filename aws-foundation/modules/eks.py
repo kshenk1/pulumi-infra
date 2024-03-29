@@ -65,7 +65,7 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
         'cluster_role': cluster_role
     }
 
-def define_cluster(config: AWSPulumiConfig, vpc: dict) -> pulumi.Output:
+def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
     _attachments = __cluster_role_attachments(config.resource_prefix, config.tags)
     cluster_policy_attachments = _attachments['attachments']
     cluster_role = _attachments['cluster_role']

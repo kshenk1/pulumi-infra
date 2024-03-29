@@ -17,7 +17,7 @@ def __slice_up_vpc_subnets(vpc_cidr: str, subnet_bits: int) -> list:
     return subs
 
 ## Define the VPC
-def define_vpc(config: AWSPulumiConfig) -> bool:
+def define_vpc(config: AWSPulumiConfig) -> dict:
     vpc = paws.ec2.Vpc(f'{config.resource_prefix}-vpc',
         cidr_block=config.vpc['cidr'],
         tags=config.tags,
