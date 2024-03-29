@@ -54,5 +54,5 @@ pulumi stack init <resource_prefix from stack-condig.yaml>
 pulumi up
 ```
 > [!NOTE]
-> About `<resource_prefix from stack-condig.yaml>`: This can be whatever you want it to be. I've found it easy to track things by using the resource_prefix as my stack. Seems to make sense so far, perhaps until another scenario is hit...
+> About `<resource_prefix from stack-condig.yaml>`: This can be whatever you want it to be, and could represent different infrastructure depending on how you want to manage that infrastructure.
 
