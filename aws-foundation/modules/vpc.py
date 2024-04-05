@@ -5,7 +5,7 @@ from config import AWSPulumiConfig
 
 azs = paws.get_availability_zones(state='available')
 
-def __slice_up_vpc_subnets(vpc_cidr: str, subnet_bits: int) -> list:
+def __slice_vpc_into_subnets(vpc_cidr: str, subnet_bits: int) -> list:
     vpc_net = ipaddress.ip_network(vpc_cidr)
 
     if (vpc_net.prefixlen >= subnet_bits):
@@ -16,43 +16,11 @@ def __slice_up_vpc_subnets(vpc_cidr: str, subnet_bits: int) -> list:
     
     return subs
 
-## Define the VPC
-def define_vpc(config: AWSPulumiConfig) -> dict:
-    vpc = paws.ec2.Vpc(f'{config.resource_prefix}-vpc',
-        cidr_block=config.vpc['cidr'],
-        tags=config.tags,
-        enable_dns_hostnames=True)
-
-    pulumi.export('vpc_id', vpc.id)
-
-    subnets = __slice_up_vpc_subnets(config.vpc['cidr'], config.vpc['subnet_size'])
+def _define_public_subnets(config: AWSPulumiConfig, vpc_id: str, az_subnets: list) -> list:
+    public_subs = []
     num_private_subnets = config.vpc['num_private_subnets']
     num_public_subnets = config.vpc['num_public_subnets']
 
-    if not subnets:
-        return False
-    
-    private_subs = []
-    public_subs = []
-
-    ## Define private subnets
-    _add_tags = {
-        'Name' : f'{config.resource_prefix}-priv',
-        f'kubernetes.io/cluster/{config.resource_prefix}': "shared",
-        'kubernetes.io/role/internal-elb': '1'
-    }
-    _tags = config.tags | _add_tags
-    for i in range(num_private_subnets):    
-        sub = paws.ec2.Subnet(f'{config.resource_prefix}-privnet-{i}',
-            vpc_id=vpc.id,
-            availability_zone=azs.names[i],
-            cidr_block=subnets[i],
-            enable_resource_name_dns_a_record_on_launch=True,
-            private_dns_hostname_type_on_launch='ip-name',
-            tags=_tags)
-        private_subs.append(sub)
-
-    ## Define public subnets
     _add_tags = {
         'Name' : f'{config.resource_prefix}-pub',
         f'kubernetes.io/cluster/{config.resource_prefix}': 'shared',
@@ -66,13 +34,50 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
             az = azs.names[i-num_private_subnets]
 
         sub = paws.ec2.Subnet(f'{config.resource_prefix}-pubnet-{i}',
-            vpc_id=vpc.id,
+            vpc_id=vpc_id,
             availability_zone=az,
-            cidr_block=subnets[i],
+            cidr_block=az_subnets[i],
             map_public_ip_on_launch=True,
             tags=_tags)
 
         public_subs.append(sub)
+    return public_subs
+
+def _define_private_subnets(config: AWSPulumiConfig, vpc_id: str, az_subnets: list) -> list:
+    private_subs = []
+    _add_tags = {
+        'Name' : f'{config.resource_prefix}-priv',
+        f'kubernetes.io/cluster/{config.resource_prefix}': "shared",
+        'kubernetes.io/role/internal-elb': '1'
+    }
+    _tags = config.tags | _add_tags
+    for i in range(config.vpc['num_private_subnets']):    
+        sub = paws.ec2.Subnet(f'{config.resource_prefix}-privnet-{i}',
+            vpc_id=vpc_id,
+            availability_zone=azs.names[i],
+            cidr_block=az_subnets[i],
+            enable_resource_name_dns_a_record_on_launch=True,
+            private_dns_hostname_type_on_launch='ip-name',
+            tags=_tags)
+        private_subs.append(sub)
+    return private_subs
+
+## Define the VPC
+def define_vpc(config: AWSPulumiConfig) -> dict:
+    vpc = paws.ec2.Vpc(f'{config.resource_prefix}-vpc',
+        cidr_block=config.vpc['cidr'],
+        tags=config.tags,
+        enable_dns_hostnames=True)
+
+    pulumi.export('vpc_id', vpc.id)
+
+    subnets = __slice_vpc_into_subnets(config.vpc['cidr'], config.vpc['subnet_size'])
+
+    if not subnets:
+        raise ValueError(f'Unable to determine subnets from VPC: {config.vpc["cidr"]} and the specified subnet size of {config.vpc["subnet_size"]}')
+    
+    private_subs = _define_private_subnets(config, vpc.id, subnets)
+    public_subs = _define_public_subnets(config, vpc.id, subnets)
 
     ## Define an internet gateway
     gw = paws.ec2.InternetGateway(f'{config.resource_prefix}-igw',

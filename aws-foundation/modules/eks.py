@@ -65,6 +65,32 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
         'cluster_role': cluster_role
     }
 
+def _define_launch_template(config: AWSPulumiConfig) -> pulumi.Output:
+    ## Setting up for a launch template based on data from the yaml config
+    instance_requirements_args = paws.ec2.LaunchTemplateInstanceRequirementsArgs(
+        memory_mib=paws.ec2.LaunchTemplateInstanceRequirementsMemoryMibArgs(
+            min=config.eks['node_groups']['memory_mib']['min'],
+            max=config.eks['node_groups']['memory_mib']['max']
+        ),
+        vcpu_count=paws.ec2.LaunchTemplateInstanceRequirementsVcpuCountArgs(
+            min=config.eks['node_groups']['vcpu_count']['min'],
+            max=config.eks['node_groups']['vcpu_count']['max']
+        ),
+        allowed_instance_types=config.eks['node_groups']['instance_types']
+    )
+
+    ## Define the launch template for nodes in the node group
+    _tags = config.tags | {'Name': f'{config.resource_prefix}-nodes'}
+    launch_template = paws.ec2.LaunchTemplate(f'{config.resource_prefix}-nodegroup',
+        instance_requirements=instance_requirements_args,
+        tag_specifications=[paws.ec2.LaunchTemplateTagSpecificationArgs(
+            resource_type='instance',
+            tags=_tags
+        )],
+        tags=config.tags
+    )
+    return launch_template
+
 def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
     _attachments = __cluster_role_attachments(config.resource_prefix, config.tags)
     cluster_policy_attachments = _attachments['attachments']
@@ -122,32 +148,6 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
         'cluster': cluster,
         'node_role': node_role
     }
-
-def _define_launch_template(config: AWSPulumiConfig) -> pulumi.Output:
-    ## Setting up for a launch template based on data from the yaml config
-    instance_requirements_args = paws.ec2.LaunchTemplateInstanceRequirementsArgs(
-        memory_mib=paws.ec2.LaunchTemplateInstanceRequirementsMemoryMibArgs(
-            min=config.eks['node_groups']['memory_mib']['min'],
-            max=config.eks['node_groups']['memory_mib']['max']
-        ),
-        vcpu_count=paws.ec2.LaunchTemplateInstanceRequirementsVcpuCountArgs(
-            min=config.eks['node_groups']['vcpu_count']['min'],
-            max=config.eks['node_groups']['vcpu_count']['max']
-        ),
-        allowed_instance_types=config.eks['node_groups']['instance_types']
-    )
-
-    ## Define the launch template for nodes in the node group
-    _tags = config.tags | {'Name': f'{config.resource_prefix}-nodes'}
-    launch_template = paws.ec2.LaunchTemplate(f'{config.resource_prefix}-nodegroup',
-        instance_requirements=instance_requirements_args,
-        tag_specifications=[paws.ec2.LaunchTemplateTagSpecificationArgs(
-            resource_type='instance',
-            tags=_tags
-        )],
-        tags=config.tags
-    )
-    return launch_template
 
 def define_node_groups(config: AWSPulumiConfig, cluster: pulumi.Output, node_role: pulumi.Output, vpc: dict) -> list:
     ## Attachments for the managed policies

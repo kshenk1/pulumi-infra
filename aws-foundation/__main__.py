@@ -7,9 +7,7 @@ import modules.eks as eks
 
 from config import AWSPulumiConfig
 
-config_file = 'stack-config.yaml'
-
-config = AWSPulumiConfig(config_file)
+config = AWSPulumiConfig('stack-config.yaml')
 
 vpc_data = vpc.define_vpc(config)
 
