@@ -33,6 +33,9 @@ class AWSPulumiConfig(object):
     
     def efs_enabled(self) -> bool:
         return self.efs.get('enabled')
+    
+    def lb_controller_enabled(self) -> bool:
+        return self.eks.get('loadbalancer_controller_enabled')
 
     def __validation(self, config) -> bool:
         tags = config.get('aws')['tags']
@@ -52,9 +55,9 @@ class AWSPulumiConfig(object):
             e.append('Is the vpc.cidr missing?')
 
         if int(config.get('aws').get('vpc')['num_public_subnets']) < CONST.MIN_PUBLIC_SUBNETS:
-            e.append(f'There need to be at least {CONST.MIN_PUBLIC_SUBNETS} public subnet(s)')
+            e.append(f'There needs to be at least {CONST.MIN_PUBLIC_SUBNETS} public subnet(s)')
         if int(config.get('aws').get('vpc')['num_private_subnets']) < CONST.MIN_PRIVATE_SUBNETS:
-            e.append(f'There need to be at least {CONST.MIN_PRIVATE_SUBNETS} private subnet(s)')
+            e.append(f'There needs to be at least {CONST.MIN_PRIVATE_SUBNETS} private subnet(s)')
 
         if config.get('aws').get('rds').get('enabled'):
             self.rds = config.get('aws')['rds']

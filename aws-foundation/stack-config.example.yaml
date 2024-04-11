@@ -22,9 +22,11 @@ aws:
 
   eks:
     enabled: true
+    loadbalancer_controller_enabled: true # the aws-load-balancer-controller needs to be installed differently than addons
     version: '1.29'
     desired_nodes_per_group: 2 # used for desired AND min
     max_nodes_per_group: 10
+    ## The number of NODE GROUPS created depends on the number of subnets. 1 group per subnet will be created.
     node_groups:
       instance_types: # AWS will attempt to create instances from
         - m6a.xlarge
@@ -36,10 +38,16 @@ aws:
       vcpu_count:
         min: 4
         max: 8
+    ## aws eks describe-addon-versions --kubernetes-version x.xx --addon-name the-addon-name
+    addons:
+      - name: aws-ebs-csi-driver
+        version: v1.29.1-eksbuild.1
 
   rds:
     enabled: true
+    aws_rds_type: instance ## or cluster, if you want a multi-az cluster instead
     storage: 75
+    storage_type: gp3
     engine: 'mysql'
     engine_version: '8.0.35'
     family: 'mysql8.0'

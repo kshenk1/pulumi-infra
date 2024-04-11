@@ -103,7 +103,7 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
         routes=[
             paws.ec2.RouteTableRouteArgs(
                 cidr_block='0.0.0.0/0',
-                gateway_id=ngw.id
+                nat_gateway_id=ngw.id
             )
         ],
         tags=_tags)
