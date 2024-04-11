@@ -1,0 +1,15 @@
+---
+chart_name: aws-load-balancer-controller
+namespace: kube-system
+version: 1.7.2
+source:
+  url: https://aws.github.io/eks-charts
+values:
+  clusterName: i-get-replaced
+  serviceAccount:
+    create: true
+    name: aws-load-balancer-controller-role
+    annotations:
+      eks.amazonaws.com/role-arn: i-get-replaced
+  vpcId: i-get-replaced
+  
