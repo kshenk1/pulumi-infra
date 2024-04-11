@@ -22,7 +22,7 @@ def __get_datafile(filename: str) -> str:
         else:
             return f.read()
 
-def __write_kubeconfig(config: AWSPulumiConfig, cluster: pulumi.Output):
+def __write_kubeconfig(config: AWSPulumiConfig):
     _cluster = paws.eks.get_cluster(config.resource_prefix)
     kubeconfig = f"""
 apiVersion: v1
@@ -181,7 +181,9 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
     )
 
     pulumi.export('cluster_name', cluster.name)
-    __write_kubeconfig(config, cluster)
+
+    ## This has been problematic...
+    #__write_kubeconfig(config)
 
     return {
         'cluster': cluster,
@@ -318,7 +320,10 @@ def create_k8s_service_account(config: AWSPulumiConfig, cluster: pulumi.Output, 
 
 def create_addons(config: AWSPulumiConfig, cluster: pulumi.Output, k8s_provider: pulumi.Output, node_groups: list) -> list:
     addons = config.eks['addons']
-    if not addons: return []
+    if not addons:
+        ## Just to show in the outputs that we didn't install any
+        pulumi.export('addons', [])
+        return []
 
     installed_addons = []
 
@@ -341,7 +346,7 @@ def create_addons(config: AWSPulumiConfig, cluster: pulumi.Output, k8s_provider:
             )
         ))
 
-    pulumi.export('addons', pulumi.Output.all(a.arn for a in installed_addons))
+    pulumi.export('addons', [a.arn for a in installed_addons])
 
     return installed_addons
 
@@ -369,10 +374,15 @@ def create_lb_controller(config: AWSPulumiConfig, cluster: pulumi.Output, k8s_pr
         version=lb_chart.get('version')
     )
 
-    return Release(
+    release = Release(
         resource_name=f'{config.resource_prefix}-lb-controller',
         args=release_args,
         opts=pulumi.ResourceOptions(
             provider=k8s_provider, depends_on=node_groups
         )
     )
+
+    combined = pulumi.Output.all(release.name, release.version, release.status)
+    pulumi.export('aws-lb', combined.apply(lambda x: f'Name: {x[0]}, Version: {x[1]}, Status: {x[2]}'))
+
+    return release
