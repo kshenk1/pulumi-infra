@@ -35,7 +35,10 @@ class AWSPulumiConfig(object):
         return self.efs.get('enabled')
     
     def lb_controller_enabled(self) -> bool:
-        return self.eks.get('loadbalancer_controller_enabled')
+        return self.eks.get('loadbalancer_controller').get('enabled')
+    
+    def efs_csi_driver_enabled(self) -> bool:
+        return self.efs.get('csi_driver').get('enabled')
 
     def __validation(self, config) -> bool:
         tags = config.get('aws')['tags']
