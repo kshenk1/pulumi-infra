@@ -3,14 +3,15 @@ import pulumi_aws as paws
 import pulumi_eks as peks
 import pulumi_kubernetes as pk8s
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
+from modules.eks import k8sProvider
 from config import AWSPulumiConfig
 
 from modules.eks import get_datafile
 import json
 
-def define_lb_controller(config: AWSPulumiConfig, cluster: peks.Cluster, k8s_provider: pulumi.Output, node_groups: list, vpc_id: str) -> dict:
+def define_lb_controller(config: AWSPulumiConfig, k8s_provider: k8sProvider, node_groups: list, vpc_id: str) -> dict:
     service_role_policy = create_service_role_policy(config)
-
+    cluster = k8s_provider.cluster
     _role_name = f'{config.eks.get("loadbalancer_controller").get("role_name_prefix")}-{config.resource_prefix}'
     _service_role_name = config.eks.get('loadbalancer_controller').get('service_role_name')
 
@@ -48,12 +49,12 @@ def define_lb_controller(config: AWSPulumiConfig, cluster: peks.Cluster, k8s_pro
         resource_name=f'{config.resource_prefix}-lb-controller',
         args=release_args,
         opts=pulumi.ResourceOptions(
-            provider=k8s_provider, depends_on=node_groups
+            provider=k8s_provider.get_provider(), depends_on=node_groups
         )
     )
 
     combined = pulumi.Output.all(release.name, release.version, release.status['status'])
-    pulumi.export(f'{config.resource_prefix}-lb-controller', combined.apply(lambda x: f'Name: {x[0]}, Version: {x[1]}, Status: {x[2]}'))
+    pulumi.export(f'helm_eks_lb_controller', combined.apply(lambda x: f'Name: {x[0]}, Version: {x[1]}, Status: {x[2]}'))
 
     k8s_service_account = create_k8s_service_account(config, cluster, True, k8s_provider, service_account_role, _service_role_name)
 
@@ -119,7 +120,7 @@ def create_service_account_role(config: AWSPulumiConfig, role_name: str, oidc_pr
 
     return role
 
-def create_k8s_service_account(config: AWSPulumiConfig, cluster: pulumi.Output, auto_mount_token: bool, k8s_provider: pulumi.Output, service_account_role: pulumi.Output, service_account_name: str) -> pulumi.Output:
+def create_k8s_service_account(config: AWSPulumiConfig, cluster: pulumi.Output, auto_mount_token: bool, k8s_provider: k8sProvider, service_account_role: pulumi.Output, service_account_name: str) -> pulumi.Output:
     sa_args = pk8s.core.v1.ServiceAccountInitArgs(
         automount_service_account_token=auto_mount_token,
         metadata=pk8s.meta.v1.ObjectMetaArgs(
@@ -135,5 +136,5 @@ def create_k8s_service_account(config: AWSPulumiConfig, cluster: pulumi.Output, 
     return pk8s.core.v1.ServiceAccount(
         service_account_name, 
         args=sa_args, 
-        opts=pulumi.ResourceOptions(provider=k8s_provider)
+        opts=pulumi.ResourceOptions(provider=k8s_provider.get_provider())
     )

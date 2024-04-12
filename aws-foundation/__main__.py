@@ -31,12 +31,12 @@ if config.eks_enabled():
     node_role = _data['node_role']
 
     node_groups = eks.define_node_groups(config, cluster_obj, node_role, vpc_data)
-    k8s_provider = eks.get_provider(config, cluster_obj)
+    k8s_provider = eks.k8sProvider(config, cluster_obj)
 
     if config.lb_controller_enabled():
-        lb_resources = ekslb.define_lb_controller(config, cluster_obj, k8s_provider, node_groups, vpc_data['vpc_id'])
+        lb_resources = ekslb.define_lb_controller(config, k8s_provider, node_groups, vpc_data['vpc_id'])
 
     if config.efs_csi_driver_enabled():
         efs_controller = efs.define_efs_controller(config, k8s_provider, node_groups)
 
-    addons = eks.define_addons(config, cluster_obj, k8s_provider, node_groups)
+    addons = eks.define_addons(config, k8s_provider, node_groups)

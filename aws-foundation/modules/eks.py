@@ -6,7 +6,34 @@ from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 from config import AWSPulumiConfig
 from constants import Constants as CONST
 import os
-import json, yaml
+import yaml
+
+class k8sProvider(pulumi.ComponentResource):
+
+    cluster = None
+    config = None
+    provider = None
+
+    def __init__(self, config: AWSPulumiConfig, cluster: peks.Cluster, provider_id: str = None) -> object:
+        self.config = config
+        self.cluster = cluster
+        
+        self.__set_provider(provider_id)
+    
+    def __set_provider(self, provider_id: str = None):
+        if provider_id:
+            self.provider = self.get_provider(provider_id)
+        else:
+            self.provider = pk8s.Provider(self.config.resource_prefix, kubeconfig=self.cluster.kubeconfig)
+
+    def get_provider(self, provider_id: str = None) -> pk8s.Provider:
+        if self.provider and not provider_id:
+            return self.provider
+        
+        if provider_id:
+            return pulumi.get_resource(resource_type=pk8s.Provider, id=provider_id)
+        
+        raise ValueError('You should not be here')
 
 def get_datafile(filename: str) -> str:
     parent_dir = os.path.abspath(os.getcwd())
@@ -23,36 +50,7 @@ def get_datafile(filename: str) -> str:
             return f.read()
 
 def __write_kubeconfig(config: AWSPulumiConfig):
-    _cluster = paws.eks.get_cluster(config.resource_prefix)
-    kubeconfig = f"""
-apiVersion: v1
-clusters:
-- cluster:
-    server: {_cluster.endpoint}
-    certificate-authority-data: {_cluster.certificate_authorities[0]['data']}
-  name: kubernetes
-contexts:
-- context:
-    cluster: kubernetes
-    user: aws
-  name: {_cluster.name}
-current-context: {_cluster.name}
-kind: Config
-preferences: {{}}
-users:
-- name: aws
-  user:
-    exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws-iam-authenticator
-      args:
-        - "token"
-        - "-i"
-        - "{_cluster.name}"
-"""
-
-    # Export the kubeconfig.
-    pulumi.export('kubeconfig', kubeconfig)
+    pulumi.export('kubeconfig_update_command', f'aws eks update-kubeconfig --name {config.resource_prefix} --alias {config.resource_prefix}')
 
 def __policy_attachments(resource_prefix: str, type: str, role: pulumi.Output, suffix_count_start=0) -> list:
     arns = CONST.EKS_MANAGED_ARNS.get(type)
@@ -182,8 +180,7 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
 
     pulumi.export('cluster_name', cluster.name)
 
-    ## This has been problematic...
-    #__write_kubeconfig(config)
+    __write_kubeconfig(config)
 
     return {
         'cluster': cluster,
@@ -245,7 +242,7 @@ def get_provider(config: AWSPulumiConfig, cluster: pulumi.Output) -> pk8s.core.v
 
     return k8s_provider
 
-def define_addons(config: AWSPulumiConfig, cluster: pulumi.Output, k8s_provider: pulumi.Output, node_groups: list) -> list:
+def define_addons(config: AWSPulumiConfig, k8s_provider: k8sProvider, node_groups: list) -> list:
     addons = config.eks['addons']
     if not addons:
         ## Just to show in the outputs that we didn't install any
@@ -253,6 +250,7 @@ def define_addons(config: AWSPulumiConfig, cluster: pulumi.Output, k8s_provider:
         return []
 
     installed_addons = []
+    cluster = k8s_provider.cluster
 
     for addon in addons:
         args = paws.eks.AddonArgs(
@@ -268,7 +266,7 @@ def define_addons(config: AWSPulumiConfig, cluster: pulumi.Output, k8s_provider:
             resource_name=f'{config.resource_prefix}-{addon["name"]}',
             args=args,
             opts=pulumi.ResourceOptions(
-                provider=k8s_provider,
+                provider=k8s_provider.get_provider(),
                 depends_on=node_groups
             )
         ))
