@@ -17,12 +17,14 @@ aws:
     num_public_subnets: 2 # the number of PUBLIC subnets we'll attempt to create
 
   efs:
-    enabled: true
+    enabled: !!bool true
     transition_to_ia: "AFTER_30_DAYS"
+    csi_driver:
+      enabled: !!bool true
+      version: 2.5.6
 
   eks:
-    enabled: true
-    loadbalancer_controller_enabled: true # the aws-load-balancer-controller needs to be installed differently than addons
+    enabled: !!bool true
     version: '1.29'
     desired_nodes_per_group: 2 # used for desired AND min
     max_nodes_per_group: 10
@@ -38,13 +40,18 @@ aws:
       vcpu_count:
         min: 4
         max: 8
+    loadbalancer_controller:
+      # the aws-load-balancer-controller needs to be installed differently than addons
+      enabled: !!bool true
+      role_name_prefix: aws-load-balancer-controller-iam-role
+      service_role_name: aws-load-balancer-controller
     ## aws eks describe-addon-versions --kubernetes-version x.xx --addon-name the-addon-name
     addons:
       - name: aws-ebs-csi-driver
         version: v1.29.1-eksbuild.1
 
   rds:
-    enabled: true
+    enabled: !!bool true
     aws_rds_type: instance ## or cluster, if you want a multi-az cluster instead
     storage: 75
     storage_type: gp3
