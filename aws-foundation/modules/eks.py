@@ -8,7 +8,7 @@ from constants import Constants as CONST
 import os
 import json, yaml
 
-def __get_datafile(filename: str) -> str:
+def get_datafile(filename: str) -> str:
     parent_dir = os.path.abspath(os.getcwd())
     data_dir = os.path.join(parent_dir, 'data')
     data_file = os.path.join(data_dir, filename)
@@ -72,11 +72,11 @@ def __policy_attachments(resource_prefix: str, type: str, role: pulumi.Output, s
 
 def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
     cluster_role = paws.iam.Role(f'{resource_prefix}-cluster',
-        assume_role_policy=__get_datafile('cluster.role-policy.json'))
+        assume_role_policy=get_datafile('cluster.role-policy.json'))
     
     efs_policy = paws.iam.Policy(f'{resource_prefix}-efs-csi-driver-policy',
         name_prefix=resource_prefix,
-        policy=__get_datafile('efs-csi-driver.iam-policy.json'),
+        policy=get_datafile('efs-csi-driver.iam-policy.json'),
         tags=tags
     )
     _efs_att = paws.iam.RolePolicyAttachment(f'{resource_prefix}-efs-att',
@@ -86,7 +86,7 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
 
     autoscaling_policy = paws.iam.Policy(f'{resource_prefix}-autoscaling',
         name_prefix=resource_prefix,
-        policy=__get_datafile('autoscaling.iam-policy.json'),
+        policy=get_datafile('autoscaling.iam-policy.json'),
         tags=tags
     )
     _auto_att = paws.iam.RolePolicyAttachment(f'{resource_prefix}-auto-att',
@@ -103,7 +103,7 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
         'cluster_role': cluster_role
     }
 
-def _define_launch_template(config: AWSPulumiConfig) -> pulumi.Output:
+def _define_launch_template(config: AWSPulumiConfig) -> paws.ec2.LaunchTemplate:
     ## Setting up for a launch template based on data from the yaml config
     instance_requirements_args = paws.ec2.LaunchTemplateInstanceRequirementsArgs(
         memory_mib=paws.ec2.LaunchTemplateInstanceRequirementsMemoryMibArgs(
@@ -157,7 +157,7 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
     ## Exception: A managed node group cannot be created without first setting its role in the cluster's instanceRoles
     node_role = paws.iam.Role(f'{config.resource_prefix}-nodegroup',
         name=f'{config.resource_prefix}-nodegroup',
-        assume_role_policy=__get_datafile('nodegroup.role-policy.json'))
+        assume_role_policy=get_datafile('nodegroup.role-policy.json'))
 
     _tags = config.tags | {'Name': config.resource_prefix}
     cluster_args = peks.ClusterArgs(
@@ -240,85 +240,12 @@ def define_node_groups(config: AWSPulumiConfig, cluster: pulumi.Output, node_rol
 
     return node_groups
 
-def create_service_role_policy(config: AWSPulumiConfig):
-    service_policy = __get_datafile('lb-controller.iam-policy.json')
-
-    pargs = paws.iam.PolicyArgs(
-        name=f'AWSLoadBalancerControllerIAMPolicy-{config.resource_prefix}',
-        policy=service_policy,
-        description='Policy for LB controller',
-        tags=config.tags
-    )
-
-    return paws.iam.Policy(f'AWSLoadBalancerControllerIAMPolicy-{config.resource_prefix}', pargs)
-
-def create_service_account_role(config: AWSPulumiConfig, role_name: str, oidc_provider_url: pulumi.Output, oidc_provider_arn: pulumi.Output, service_account_name: str,
-    policy: pulumi.Output) -> paws.iam.Role:
-
-    assume_policy = pulumi.Output.all(oidc_provider_url, oidc_provider_arn).apply(
-        lambda args: json.dumps(
-            {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Principal": {
-                            "Federated": f"{args[1]}",
-                        },
-                        "Action": "sts:AssumeRoleWithWebIdentity",
-                        "Condition": {
-                            "StringEquals": {
-                                f"{args[0]}:aud": "sts.amazonaws.com",
-                                f"{args[0]}:sub": f"system:serviceaccount:kube-system:{service_account_name}"
-                            }
-                        }
-                    }
-                ]
-            }
-        )
-    )
-
-    role_args = paws.iam.RoleArgs(name=role_name,
-        assume_role_policy=assume_policy,
-        tags=config.tags | {"Name": role_name}
-    )
-
-    role = paws.iam.Role(resource_name=role_name, args=role_args)
-
-    pa = paws.iam.RolePolicyAttachment(resource_name=f"{role_name}-attachment",
-        role=role.name,
-        policy_arn=policy.arn
-    )
-
-    pulumi.export('oidc_provider_url', oidc_provider_url)
-
-    return role
-
-def get_provider(config: AWSPulumiConfig, cluster: pulumi.Output) -> pulumi.Output:
+def get_provider(config: AWSPulumiConfig, cluster: pulumi.Output) -> pk8s.core.v1.ServiceAccount:
     k8s_provider = pk8s.Provider(config.resource_prefix, kubeconfig=cluster.kubeconfig)
 
     return k8s_provider
 
-def create_k8s_service_account(config: AWSPulumiConfig, cluster: pulumi.Output, auto_mount_token: bool, k8s_provider: pulumi.Output, service_account_role: pulumi.Output, service_account_name: str) -> pulumi.Output:
-    sa_args = pk8s.core.v1.ServiceAccountInitArgs(
-        automount_service_account_token=auto_mount_token,
-        metadata=pk8s.meta.v1.ObjectMetaArgs(
-            name=cluster.eks_cluster,
-            namespace='kube-system',
-            annotations={
-                # Annotate with the IAM role ARN
-                "eks.amazonaws.com/role-arn": service_account_role.arn
-            }
-        )
-    )
-
-    return pk8s.core.v1.ServiceAccount(
-        service_account_name, 
-        args=sa_args, 
-        opts=pulumi.ResourceOptions(provider=k8s_provider)
-    )
-
-def create_addons(config: AWSPulumiConfig, cluster: pulumi.Output, k8s_provider: pulumi.Output, node_groups: list) -> list:
+def define_addons(config: AWSPulumiConfig, cluster: pulumi.Output, k8s_provider: pulumi.Output, node_groups: list) -> list:
     addons = config.eks['addons']
     if not addons:
         ## Just to show in the outputs that we didn't install any
@@ -349,40 +276,3 @@ def create_addons(config: AWSPulumiConfig, cluster: pulumi.Output, k8s_provider:
     pulumi.export('addons', [a.arn for a in installed_addons])
 
     return installed_addons
-
-def create_lb_controller(config: AWSPulumiConfig, cluster: pulumi.Output, k8s_provider: pulumi.Output, vpc_id: str, node_groups: list, role: pulumi.Output) -> Release:
-    lb_chart = __get_datafile('aws-load-balancer-controller.values.yaml')
-
-    lb_chart['values'].update({'clusterName': cluster.eks_cluster})
-    lb_chart['values'].update({'vpcId': vpc_id})
-    lb_chart['values']['serviceAccount']['annotations'].update({
-        'eks.amazonaws.com/role-arn': role.arn
-    })
-
-    repo_opts_args = RepositoryOptsArgs(
-        repo=lb_chart.get('source').get('url'),
-    )
-
-    release_args = ReleaseArgs(
-        chart=lb_chart.get('chart_name'),
-        create_namespace=True,
-        force_update=True,
-        namespace=lb_chart.get('namespace'),
-        repository_opts=repo_opts_args,
-        timeout=300,
-        values=lb_chart.get('values'),
-        version=lb_chart.get('version')
-    )
-
-    release = Release(
-        resource_name=f'{config.resource_prefix}-lb-controller',
-        args=release_args,
-        opts=pulumi.ResourceOptions(
-            provider=k8s_provider, depends_on=node_groups
-        )
-    )
-
-    combined = pulumi.Output.all(release.name, release.version, release.status)
-    pulumi.export('aws-lb', combined.apply(lambda x: f'Name: {x[0]}, Version: {x[1]}, Status: {x[2]}'))
-
-    return release

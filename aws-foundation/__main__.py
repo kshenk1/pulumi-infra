@@ -3,7 +3,7 @@
 import modules.vpc as vpc
 import modules.efs as efs
 import modules.eks as eks
-import pulumi_kubernetes as pk8s
+import modules.eks_lb_controller as ekslb
 # NOTE CONDITIONAL IMPORTS BELOW
 
 from config import AWSPulumiConfig
@@ -23,38 +23,20 @@ if config.rds_enabled():
     else:
         raise ValueError('Unable to load an RDS module. Check your rds.aws_rds_type value')
 
-    rds = rds.define_rds(config, vpc_data)
+    rds_install = rds.define_rds(config, vpc_data)
 
 if config.eks_enabled():
     _data = eks.define_cluster(config, vpc_data)
     cluster_obj = _data['cluster']
-    node_groups = eks.define_node_groups(config, cluster_obj, _data['node_role'], vpc_data)
+    node_role = _data['node_role']
 
-    service_role_policy = eks.create_service_role_policy(config)
-    _role_name = f'aws-load-balancer-controller-iam-role-{config.resource_prefix}'
-    _service_role_name = 'aws-load-balancer-controller'
-    service_account_role = eks.create_service_account_role(
-        config=config,
-        role_name=_role_name,
-        oidc_provider_url=cluster_obj.core.oidc_provider.url,
-        oidc_provider_arn=cluster_obj.core.oidc_provider.arn,
-        service_account_name=_service_role_name,
-        policy=service_role_policy
-    )
-
+    node_groups = eks.define_node_groups(config, cluster_obj, node_role, vpc_data)
     k8s_provider = eks.get_provider(config, cluster_obj)
 
     if config.lb_controller_enabled():
-        release = eks.create_lb_controller(
-            config=config,
-            cluster=cluster_obj,
-            k8s_provider=k8s_provider,
-            vpc_id=vpc_data['vpc_id'],
-            node_groups=node_groups,
-            role=service_account_role
-        )
+        lb_resources = ekslb.define_lb_controller(config, cluster_obj, k8s_provider, node_groups, vpc_data['vpc_id'])
 
-    k8s_service_account = eks.create_k8s_service_account(config, cluster_obj, True, k8s_provider, service_account_role, _service_role_name)
+    if config.efs_csi_driver_enabled():
+        efs_controller = efs.define_efs_controller(config, k8s_provider, node_groups)
 
-    addons = eks.create_addons(config, cluster_obj, k8s_provider, node_groups)
-
+    addons = eks.define_addons(config, cluster_obj, k8s_provider, node_groups)
