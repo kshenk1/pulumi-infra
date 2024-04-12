@@ -70,11 +70,11 @@ def __policy_attachments(resource_prefix: str, type: str, role: pulumi.Output, s
 
 def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
     cluster_role = paws.iam.Role(f'{resource_prefix}-cluster',
-        assume_role_policy=get_datafile('cluster.role-policy.json'))
+        assume_role_policy=get_datafile(CONST.FILE_CLUSTER_ROLE_POLICY))
     
     efs_policy = paws.iam.Policy(f'{resource_prefix}-efs-csi-driver-policy',
         name_prefix=resource_prefix,
-        policy=get_datafile('efs-csi-driver.iam-policy.json'),
+        policy=get_datafile(CONST.FILE_EFS_CSI_DRIVER_POLICY),
         tags=tags
     )
     _efs_att = paws.iam.RolePolicyAttachment(f'{resource_prefix}-efs-att',
@@ -84,7 +84,7 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
 
     autoscaling_policy = paws.iam.Policy(f'{resource_prefix}-autoscaling',
         name_prefix=resource_prefix,
-        policy=get_datafile('autoscaling.iam-policy.json'),
+        policy=get_datafile(CONST.FILE_AUTOSCALING_POLICY),
         tags=tags
     )
     _auto_att = paws.iam.RolePolicyAttachment(f'{resource_prefix}-auto-att',
@@ -155,7 +155,7 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
     ## Exception: A managed node group cannot be created without first setting its role in the cluster's instanceRoles
     node_role = paws.iam.Role(f'{config.resource_prefix}-nodegroup',
         name=f'{config.resource_prefix}-nodegroup',
-        assume_role_policy=get_datafile('nodegroup.role-policy.json'))
+        assume_role_policy=get_datafile(CONST.FILE_NODEGROUP_ROLE_POLICY))
 
     _tags = config.tags | {'Name': config.resource_prefix}
     cluster_args = peks.ClusterArgs(

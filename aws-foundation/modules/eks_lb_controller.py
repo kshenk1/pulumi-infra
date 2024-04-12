@@ -5,6 +5,7 @@ import pulumi_kubernetes as pk8s
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 from modules.eks import k8sProvider
 from config import AWSPulumiConfig
+from constants import Constants as CONST
 
 from modules.eks import get_datafile
 import json
@@ -24,7 +25,7 @@ def define_lb_controller(config: AWSPulumiConfig, k8s_provider: k8sProvider, nod
         policy=service_role_policy
     )
 
-    lb_chart = get_datafile('aws-load-balancer-controller.values.yaml')
+    lb_chart = get_datafile(CONST.FILE_LB_CONTROLLER_VALUES)
 
     lb_chart['values'].update({'clusterName': cluster.eks_cluster})
     lb_chart['values'].update({'vpcId': vpc_id})
@@ -67,7 +68,7 @@ def define_lb_controller(config: AWSPulumiConfig, k8s_provider: k8sProvider, nod
 
 
 def create_service_role_policy(config: AWSPulumiConfig) -> paws.iam.Policy:
-    service_policy = get_datafile('lb-controller.iam-policy.json')
+    service_policy = get_datafile(CONST.FILE_LB_CONTROLLER_POLICY)
 
     pargs = paws.iam.PolicyArgs(
         name=f'AWSLoadBalancerControllerIAMPolicy-{config.resource_prefix}',
