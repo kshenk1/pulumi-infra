@@ -110,7 +110,8 @@ def __get_asg_name(cluster_name: str, node_group_name: str) -> str:
         raise(e)
 
 def _tag_asgs(config: AWSPulumiConfig, asg_names: list, node_groups: list):
-    for counter, asg in enumerate(asg_names):
+    counter = 0
+    for asg in asg_names:
         for k, v in config.tags.items():
             paws.autoscaling.Tag(f'{config.resource_prefix}-asg-tag-{counter}',
                 autoscaling_group_name=asg,
@@ -123,6 +124,7 @@ def _tag_asgs(config: AWSPulumiConfig, asg_names: list, node_groups: list):
                     depends_on=node_groups
                 )
             )
+            counter += 1
 
 def _define_launch_template(config: AWSPulumiConfig) -> paws.ec2.LaunchTemplate:
     ## Setting up for a launch template based on data from the yaml config
