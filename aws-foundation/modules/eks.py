@@ -104,22 +104,25 @@ def __get_asg_name(cluster_name: str, node_group_name: str) -> str:
         cluster_name=cluster_name,
         node_group_name=node_group_name
     )
-    return node_group_info.resources[0]['autoscaling_groups'][0]['name']
+    try:
+        return node_group_info.resources[0]['autoscaling_groups'][0]['name']
+    except (KeyError, IndexError) as e:
+        raise(e)
 
-def _tag_asgs(config: AWSPulumiConfig, asg_names: list):
-    counter = 0
-    for asg in asg_names:
+def _tag_asgs(config: AWSPulumiConfig, asg_names: list, node_groups: list):
+    for counter, asg in enumerate(asg_names):
         for k, v in config.tags.items():
-            _res_name = f'{config.resource_prefix}-asg-tag-{counter}'
-            paws.autoscaling.Tag(_res_name,
+            paws.autoscaling.Tag(f'{config.resource_prefix}-asg-tag-{counter}',
                 autoscaling_group_name=asg,
                 tag=paws.autoscaling.TagTagArgs(
                     key=k,
                     propagate_at_launch=False, # no, we'll get them from the launch template
                     value=v
+                ),
+                opts=pulumi.ResourceOptions(
+                    depends_on=node_groups
                 )
             )
-            counter += 1
 
 def _define_launch_template(config: AWSPulumiConfig) -> paws.ec2.LaunchTemplate:
     ## Setting up for a launch template based on data from the yaml config
@@ -257,7 +260,7 @@ def define_node_groups(config: AWSPulumiConfig, cluster: pulumi.Output, node_rol
 
         asgs.append(asg_name)
 
-    _tag_asgs(config, asgs)
+    _tag_asgs(config, asgs, node_groups)
     pulumi.export('nodegroups', [n.node_group.node_group_name for n in node_groups])
 
     return node_groups

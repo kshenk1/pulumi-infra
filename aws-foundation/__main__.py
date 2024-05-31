@@ -17,6 +17,7 @@ config.add_tags({
     'pulumi-stack': pulumi.get_stack()
 })
 
+# This pretty much enables the tagging of everything
 register_auto_tags(config.tags)
 
 vpc_data = vpc.define_vpc(config)

@@ -57,7 +57,7 @@ def define_lb_controller(config: AWSPulumiConfig, k8s_provider: k8sProvider, nod
     combined = pulumi.Output.all(release.name, release.version, release.status['status'])
     pulumi.export(f'helm_eks_lb_controller', combined.apply(lambda x: f'Name: {x[0]}, Version: {x[1]}, Status: {x[2]}'))
 
-    k8s_service_account = create_k8s_service_account(config, cluster, True, k8s_provider, service_account_role, _service_role_name)
+    k8s_service_account = create_k8s_service_account(cluster, True, k8s_provider, service_account_role, _service_role_name)
 
     return {
         'service_role_policy': service_role_policy,
@@ -71,7 +71,7 @@ def create_service_role_policy(config: AWSPulumiConfig) -> paws.iam.Policy:
     service_policy = get_datafile(CONST.FILE_LB_CONTROLLER_POLICY)
 
     pargs = paws.iam.PolicyArgs(
-        name=f'AWSLoadBalancerControllerIAMPolicy-{config.resource_prefix}',
+        name=f'{config.resource_prefix}-AWSLoadBalancerControllerIAMPolicy',
         policy=service_policy,
         description='Policy for LB controller'
     )
@@ -108,19 +108,16 @@ def create_service_account_role(config: AWSPulumiConfig, role_name: str, oidc_pr
         assume_role_policy=assume_policy,
         tags=config.tags | {"Name": role_name}
     )
-
     role = paws.iam.Role(resource_name=role_name, args=role_args)
-
-    pa = paws.iam.RolePolicyAttachment(resource_name=f"{role_name}-attachment",
+    paws.iam.RolePolicyAttachment(resource_name=f"{role_name}-attachment",
         role=role.name,
         policy_arn=policy.arn
     )
-
     pulumi.export('oidc_provider_url', oidc_provider_url)
 
     return role
 
-def create_k8s_service_account(config: AWSPulumiConfig, cluster: pulumi.Output, auto_mount_token: bool, k8s_provider: k8sProvider, service_account_role: pulumi.Output, service_account_name: str) -> pulumi.Output:
+def create_k8s_service_account(cluster: pulumi.Output, auto_mount_token: bool, k8s_provider: k8sProvider, service_account_role: pulumi.Output, service_account_name: str) -> pulumi.Output:
     sa_args = pk8s.core.v1.ServiceAccountInitArgs(
         automount_service_account_token=auto_mount_token,
         metadata=pk8s.meta.v1.ObjectMetaArgs(
