@@ -19,6 +19,12 @@ class AWSPulumiConfig(object):
         self.efs = config.get('aws')['efs']
         self.eks = config.get('aws')['eks']
 
+    def add_tags(self, tags: dict):
+        if not isinstance(tags, dict):
+            raise ValueError('tags must be a dictionary.')
+        
+        self.tags.update(tags)
+
     def instance_requested(self) -> bool:
         return self.rds.get('aws_rds_type') == 'instance'
 
@@ -65,6 +71,10 @@ class AWSPulumiConfig(object):
         if config.get('aws').get('rds').get('enabled'):
             self.rds = config.get('aws')['rds']
             self.rds['fqdn_internal'] = f"{self.rds['subdomain']}.{config.get('resource_prefix')}.{self.rds['tld']}"
+
+        _rds_type = self.rds.get('aws_rds_type')
+        if _rds_type not in CONST.RDS_CHOICES:
+            e.append(f'Invalid RDS type: "{_rds_type}". This must be one of {", ".join(CONST.RDS_CHOICES)}')
 
         if len(e) > 0:
             raise ValueError('\n'.join(e))

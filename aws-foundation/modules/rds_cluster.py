@@ -19,16 +19,14 @@ def _define_security_group(config: AWSPulumiConfig, vpc_id: str) -> pulumi.Outpu
             to_port=config.rds['port'],
             protocol='tcp',
             cidr_blocks=[config.vpc['cidr']]
-        )],
-        tags=config.tags
+        )]
     )
     return sec_group
 
 def _define_db_subnet_group(config: AWSPulumiConfig, subnets: list) -> pulumi.Output:
     subnet_group = paws.rds.SubnetGroup(config.resource_prefix,
         name_prefix=config.resource_prefix,
-        subnet_ids=[s.id for s in subnets],
-        tags=config.tags
+        subnet_ids=[s.id for s in subnets]
     )
     return subnet_group
 

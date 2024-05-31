@@ -74,8 +74,7 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
     
     efs_policy = paws.iam.Policy(f'{resource_prefix}-efs-csi-driver-policy',
         name_prefix=resource_prefix,
-        policy=get_datafile(CONST.FILE_EFS_CSI_DRIVER_POLICY),
-        tags=tags
+        policy=get_datafile(CONST.FILE_EFS_CSI_DRIVER_POLICY)
     )
     _efs_att = paws.iam.RolePolicyAttachment(f'{resource_prefix}-efs-att',
         role=cluster_role.name,
@@ -84,8 +83,7 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
 
     autoscaling_policy = paws.iam.Policy(f'{resource_prefix}-autoscaling',
         name_prefix=resource_prefix,
-        policy=get_datafile(CONST.FILE_AUTOSCALING_POLICY),
-        tags=tags
+        policy=get_datafile(CONST.FILE_AUTOSCALING_POLICY)
     )
     _auto_att = paws.iam.RolePolicyAttachment(f'{resource_prefix}-auto-att',
         role=cluster_role.name,
@@ -100,6 +98,33 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
         'attachments': cluster_policy_attachments,
         'cluster_role': cluster_role
     }
+
+def __get_asg_name(cluster_name: str, node_group_name: str) -> str:
+    node_group_info = paws.eks.get_node_group(
+        cluster_name=cluster_name,
+        node_group_name=node_group_name
+    )
+    try:
+        return node_group_info.resources[0]['autoscaling_groups'][0]['name']
+    except (KeyError, IndexError) as e:
+        raise(e)
+
+def _tag_asgs(config: AWSPulumiConfig, asg_names: list, node_groups: list):
+    counter = 0
+    for asg in asg_names:
+        for k, v in config.tags.items():
+            paws.autoscaling.Tag(f'{config.resource_prefix}-asg-tag-{counter}',
+                autoscaling_group_name=asg,
+                tag=paws.autoscaling.TagTagArgs(
+                    key=k,
+                    propagate_at_launch=False, # no, we'll get them from the launch template
+                    value=v
+                ),
+                opts=pulumi.ResourceOptions(
+                    depends_on=node_groups
+                )
+            )
+            counter += 1
 
 def _define_launch_template(config: AWSPulumiConfig) -> paws.ec2.LaunchTemplate:
     ## Setting up for a launch template based on data from the yaml config
@@ -122,8 +147,7 @@ def _define_launch_template(config: AWSPulumiConfig) -> paws.ec2.LaunchTemplate:
         tag_specifications=[paws.ec2.LaunchTemplateTagSpecificationArgs(
             resource_type='instance',
             tags=_tags
-        )],
-        tags=config.tags
+        )]
     )
     return launch_template
 
@@ -146,8 +170,7 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
             to_port=0,
             protocol='-1',
             cidr_blocks=[config.vpc['cidr']]
-        )],
-        tags=config.tags
+        )]
     )
 
     ## The standard node group policy...
@@ -222,6 +245,7 @@ def define_node_groups(config: AWSPulumiConfig, cluster: pulumi.Output, node_rol
 
     ## Create a managed node group in EACH of the private subnets defined
     node_groups = []
+    asgs = []
     for index, s in enumerate(vpc['private_subnets']):
         group = peks.ManagedNodeGroup(f'{config.resource_prefix}-mng-{index}',
             cluster_name=cluster.eks_cluster,
@@ -232,15 +256,16 @@ def define_node_groups(config: AWSPulumiConfig, cluster: pulumi.Output, node_rol
             )
         )
         node_groups.append(group)
+        asg_name = pulumi.Output.all(cluster.eks_cluster, group.node_group.node_group_name).apply(
+            lambda args: __get_asg_name(args[0], args[1])
+        )
 
+        asgs.append(asg_name)
+
+    _tag_asgs(config, asgs, node_groups)
     pulumi.export('nodegroups', [n.node_group.node_group_name for n in node_groups])
 
     return node_groups
-
-def get_provider(config: AWSPulumiConfig, cluster: pulumi.Output) -> pk8s.core.v1.ServiceAccount:
-    k8s_provider = pk8s.Provider(config.resource_prefix, kubeconfig=cluster.kubeconfig)
-
-    return k8s_provider
 
 def define_addons(config: AWSPulumiConfig, k8s_provider: k8sProvider, node_groups: list) -> list:
     addons = config.eks['addons']
@@ -258,8 +283,7 @@ def define_addons(config: AWSPulumiConfig, k8s_provider: k8sProvider, node_group
             addon_name=addon['name'],
             addon_version=addon['version'],
             resolve_conflicts_on_create="OVERWRITE",
-            resolve_conflicts_on_update="PRESERVE",
-            tags=config.tags
+            resolve_conflicts_on_update="PRESERVE"
         )
 
         installed_addons.append(paws.eks.Addon(

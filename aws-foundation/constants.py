@@ -22,6 +22,8 @@ class Constants:
     EKS_MANAGED_ARNS['cluster'] = _EKS_CLUSTER_MANAGED_ARNS
     EKS_MANAGED_ARNS['nodegroups'] = _EKS_NODES_MANAGED_ARNS
 
+    RDS_CHOICES                 = ('instance', 'cluster')
+
     FILE_AUTOSCALING_POLICY     = 'autoscaling.iam-policy.json'
     FILE_LB_CONTROLLER_VALUES   = 'aws-load-balancer-controller.values.yaml'
     FILE_CLUSTER_ROLE_POLICY    = 'cluster.role-policy.json'

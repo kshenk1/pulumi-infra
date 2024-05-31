@@ -64,9 +64,10 @@ def _define_private_subnets(config: AWSPulumiConfig, vpc_id: str, az_subnets: li
 
 ## Define the VPC
 def define_vpc(config: AWSPulumiConfig) -> dict:
-    vpc = paws.ec2.Vpc(f'{config.resource_prefix}-vpc',
+    _name = f'{config.resource_prefix}-vpc'
+    vpc = paws.ec2.Vpc(_name,
         cidr_block=config.vpc['cidr'],
-        tags=config.tags,
+        tags=config.tags | {'Name': _name},
         enable_dns_hostnames=True)
 
     pulumi.export('vpc_id', vpc.id)
@@ -81,20 +82,17 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
 
     ## Define an internet gateway
     gw = paws.ec2.InternetGateway(f'{config.resource_prefix}-igw',
-        vpc_id=vpc.id,
-        tags=config.tags)
+        vpc_id=vpc.id)
 
     ## Define an EIP for the public subnet(s)
     eip = paws.ec2.Eip(config.resource_prefix,
         domain='vpc',
-        opts=pulumi.ResourceOptions(depends_on=[gw]),
-        tags=config.tags)
+        opts=pulumi.ResourceOptions(depends_on=[gw]))
 
     ## Define a NAT Gateway
     ngw = paws.ec2.NatGateway(f'{config.resource_prefix}-nat',
         allocation_id=eip.id,
-        subnet_id=public_subs[0].id,
-        tags=config.tags)
+        subnet_id=public_subs[0].id)
 
     ## Define the PRIVATE route table
     _tags = config.tags | {'Name': f'{config.resource_prefix}-priv'}
@@ -105,8 +103,7 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
                 cidr_block='0.0.0.0/0',
                 nat_gateway_id=ngw.id
             )
-        ],
-        tags=_tags)
+        ])
 
     ## Define PUBLIC route table
     _tags = config.tags | {'Name': f'{config.resource_prefix}-pub'}
@@ -117,8 +114,7 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
                 cidr_block='0.0.0.0/0',
                 gateway_id=gw.id
             )
-        ],
-        tags=_tags)
+        ])
 
     ## Private RT association(s)
     for index, priv_sub in enumerate(private_subs):

@@ -19,8 +19,7 @@ def _define_security_group(config: AWSPulumiConfig, vpc_data: dict) -> pulumi.Ou
             to_port=0,
             protocol='-1',
             cidr_blocks=[config.vpc['cidr']]
-        )],
-        tags=config.tags
+        )]
     )
     return efs_sec
 
