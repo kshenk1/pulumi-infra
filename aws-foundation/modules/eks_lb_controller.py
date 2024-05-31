@@ -13,8 +13,8 @@ import json
 def define_lb_controller(config: AWSPulumiConfig, k8s_provider: k8sProvider, node_groups: list, vpc_id: str) -> dict:
     service_role_policy = create_service_role_policy(config)
     cluster = k8s_provider.cluster
-    _role_name = f'{config.eks.get("loadbalancer_controller").get("role_name_prefix")}-{config.resource_prefix}'
-    _service_role_name = config.eks.get('loadbalancer_controller').get('service_role_name')
+    _role_name = f'{config.resource_prefix}-{config.eks.get("loadbalancer_controller").get("role_name_prefix")}'
+    _service_role_name = f'{config.resource_prefix}-{config.eks.get("loadbalancer_controller").get("service_role_name")}'
 
     service_account_role = create_service_account_role(
         config=config,
@@ -73,11 +73,10 @@ def create_service_role_policy(config: AWSPulumiConfig) -> paws.iam.Policy:
     pargs = paws.iam.PolicyArgs(
         name=f'AWSLoadBalancerControllerIAMPolicy-{config.resource_prefix}',
         policy=service_policy,
-        description='Policy for LB controller',
-        tags=config.tags
+        description='Policy for LB controller'
     )
 
-    return paws.iam.Policy(f'AWSLoadBalancerControllerIAMPolicy-{config.resource_prefix}', pargs)
+    return paws.iam.Policy(f'{config.resource_prefix}-AWSLoadBalancerControllerIAMPolicy', pargs)
 
 def create_service_account_role(config: AWSPulumiConfig, role_name: str, oidc_provider_url: pulumi.Output, oidc_provider_arn: pulumi.Output, service_account_name: str,
     policy: pulumi.Output) -> paws.iam.Role:

@@ -1,14 +1,23 @@
 """An AWS Python Pulumi program"""
 
+import pulumi
+
 import modules.vpc as vpc
 import modules.efs as efs
 import modules.eks as eks
 import modules.eks_lb_controller as ekslb
+from modules.autotag import register_auto_tags
+from config import AWSPulumiConfig
 # NOTE CONDITIONAL IMPORTS BELOW
 
-from config import AWSPulumiConfig
-
 config = AWSPulumiConfig('stack-config.yaml')
+
+config.add_tags({
+    'pulumi-project': pulumi.get_project(), 
+    'pulumi-stack': pulumi.get_stack()
+})
+
+register_auto_tags(config.tags)
 
 vpc_data = vpc.define_vpc(config)
 
