@@ -181,6 +181,9 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
         assume_role_policy=get_datafile(CONST.FILE_NODEGROUP_ROLE_POLICY))
 
     _tags = config.tags | {'Name': config.resource_prefix}
+    _allow_cidrs = config.eks['public_access_cidrs']
+    _allow_cidrs.append(vpc['nat_public_ip'].apply(lambda x: f'{x}/32'))
+    
     cluster_args = peks.ClusterArgs(
         enabled_cluster_log_types=["api", "audit", "authenticator", "controllerManager", "scheduler"],
         name=config.resource_prefix,
@@ -192,6 +195,9 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
         private_subnet_ids=[s.id for s in vpc['private_subnets']],
         create_oidc_provider=True,
         instance_roles=[cluster_role, node_role],
+        endpoint_private_access=config.eks['endpoint_private_access'],
+        endpoint_public_access=config.eks['endpoint_public_access'],
+        public_access_cidrs=_allow_cidrs
     )
 
     cluster = peks.Cluster(config.resource_prefix,

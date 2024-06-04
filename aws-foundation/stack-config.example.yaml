@@ -26,6 +26,10 @@ aws:
   eks:
     enabled: !!bool true
     version: '1.29'
+    endpoint_private_access: !!bool true
+    endpoint_public_access: !!bool true
+    public_access_cidrs:
+      - "0.0.0.0/0"
     desired_nodes_per_group: 2 # used for desired AND min
     max_nodes_per_group: 10
     ## The number of NODE GROUPS created depends on the number of subnets. 1 group per subnet will be created.
