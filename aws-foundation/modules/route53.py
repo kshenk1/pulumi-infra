@@ -20,7 +20,7 @@ def define_dns(config: AWSPulumiConfig, lb_dns: str) -> paws.route53.Record:
     pulumi.export('dns_record', record.fqdn.apply(lambda x: x))
 
     url = record.fqdn.apply(
-        lambda dns: f"http://{dns}"
+        lambda dns: f"https://{dns}"
     )
 
     pulumi.export("Jenkins URL", url)
