@@ -5,7 +5,10 @@ import pulumi
 import modules.vpc as vpc
 import modules.efs as efs
 import modules.eks as eks
+import modules.ec2 as ec2
 import modules.eks_lb_controller as ekslb
+import modules.load_balancing as lb
+import modules.route53 as route53
 from modules.autotag import register_auto_tags
 from config import AWSPulumiConfig
 # NOTE CONDITIONAL IMPORTS BELOW
@@ -23,14 +26,9 @@ register_auto_tags(config.tags)
 vpc_data = vpc.define_vpc(config)
 
 if config.ec2_enabled():
-    import modules.ec2 as ec2
     instance = ec2.define_ec2(config, vpc_data)
-
     if config.lb_enabled():
-        import modules.load_balancing as lb
-        import modules.route53 as route53
         load_balancer = lb.define_lb(config, vpc_data, instance)
-
         route53.define_dns(config, load_balancer.dns_name)
 
 if config.efs_enabled():
