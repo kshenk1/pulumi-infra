@@ -1,12 +1,14 @@
 ---
-resource_prefix: 'pulumi-test'
-domain_name: aws.<example>.ps.beescloud.com
+my_ip: &my_ip '192.168.1.10/32'
+resource_prefix: 'my-app'
+hosted_zone: example.net
+domain_name: &domain_name my-app.example.net
+zone_alias_id: Zone-alias-id-for-cname-aliasing
 aws:
   tags:
-    cb-owner: '<my-org>'
-    cb-user: '<a-user>'
-    cb-environment: 'development'
-    cb-purpose: 'testing'
+    user: '<a-user>'
+    environment: 'development'
+    purpose: 'testing'
 
   ## Currently, changing anything here after infra is stood up will cause just about
   ## everything to be rebuilt/recreated
@@ -15,6 +17,38 @@ aws:
     subnet_size: 24 # We will attempt to use the vpc.cidr to carve out subnets of this size
     num_private_subnets: 2 # the number of private subnets we'll attempt to create
     num_public_subnets: 2 # the number of PUBLIC subnets we'll attempt to create
+
+  ec2:
+    enabled: !!bool true
+    instance_type: 't3a.medium'
+    iam_instance_profile: 'iam-profile-name'
+    ami: 'ami-id'
+    key_name: 'your-ec2-key-name'
+    security_group:
+      rules:
+        ingress:
+          - protocol: 'tcp'
+            from_port: 8080
+            to_port: 8080
+            cidr_ip: *vpc_cidr
+    tags:
+      Name: *domain_name
+
+  lb:
+    enabled: !!bool true
+    type: 'application'
+    certificate_arn: 'arn:aws:acm:us-east-1:1234567890:certificate/4v46hv-ryheryyh-vehy-vt7u-ve5h645745'
+    security_group:
+      rules:
+        ingress:
+          - protocol: 'tcp'
+            from_port: 80
+            to_port: 80
+            cidr_ip: *my_ip
+          - protocol: 'tcp'
+            from_port: 443
+            to_port: 443
+            cidr_ip: *my_ip
 
   efs:
     enabled: !!bool true
