@@ -8,7 +8,7 @@ def define_lb(config: AWSPulumiConfig, vpc_data: dict, instance: paws.ec2.Instan
         resource_prefix=config.resource_prefix, 
         vpc_id=vpc_data['vpc_id'], 
         ingress_data=config.lb.get('security_group').get('rules')['ingress'], 
-        identifier='ALB'
+        identifier='alb'
     )
 
     lb = paws.lb.LoadBalancer(f'{config.resource_prefix}-lb',
