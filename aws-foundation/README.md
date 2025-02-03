@@ -17,8 +17,10 @@ aws ssm send-command \
         wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo && \
         rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key && \
         yum install jenkins -y && \
-        usermod -a -G docker jenkins
+        usermod -a -G docker jenkins && \
         systemctl daemon-reload && \
+        systemctl enable docker && \
+        systemctl start docker && \
         systemctl enable jenkins && \
         systemctl start jenkins && sleep 3 && \
         systemctl status jenkins" \
