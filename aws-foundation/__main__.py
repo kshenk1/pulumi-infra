@@ -59,3 +59,5 @@ if config.eks_enabled():
         efs_controller = efs.define_efs_controller(config, k8s_provider, node_groups)
 
     addons = eks.define_addons(config, k8s_provider, node_groups)
+
+pulumi.export('readme', 'Documentation for things goes here')
