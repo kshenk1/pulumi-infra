@@ -85,7 +85,7 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
         vpc_id=vpc.id)
 
     ## Define an EIP for the public subnet(s)
-    eip = paws.ec2.Eip(config.resource_prefix,
+    eip = paws.ec2.Eip(f'{config.resource_prefix}-eip',
         domain='vpc',
         opts=pulumi.ResourceOptions(depends_on=[gw]))
 
@@ -118,14 +118,14 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
 
     ## Private RT association(s)
     for index, priv_sub in enumerate(private_subs):
-        priv_rta = paws.ec2.RouteTableAssociation(f'{config.resource_prefix}-{index}',
+        priv_rta = paws.ec2.RouteTableAssociation(f'{config.resource_prefix}-rta-{index}',
             subnet_id=priv_sub,
             route_table_id=prv_rt.id)
 
     ## Public RT association(s)
     index_start = len(private_subs)
     for index, pub_sub in enumerate(public_subs):
-        pub_rta = paws.ec2.RouteTableAssociation(f'{config.resource_prefix}-{index+index_start}',
+        pub_rta = paws.ec2.RouteTableAssociation(f'{config.resource_prefix}-rta-{index+index_start}',
             subnet_id=pub_sub,
             route_table_id=pub_rt.id)
 

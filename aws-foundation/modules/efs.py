@@ -1,30 +1,23 @@
 import pulumi
 import pulumi_aws as paws
+import modules.common as common
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 from config import AWSPulumiConfig
 from modules.eks import k8sProvider
 
-def _define_security_group(config: AWSPulumiConfig, vpc_data: dict) -> pulumi.Output:
-    efs_sec = paws.ec2.SecurityGroup(f'{config.resource_prefix}-efs',
-        vpc_id=vpc_data['vpc_id'],
-        name_prefix=config.resource_prefix,
-        egress=[paws.ec2.SecurityGroupEgressArgs(
-            from_port=0,
-            to_port=0,
-            protocol="-1",
-            cidr_blocks=["0.0.0.0/0"]
-        )],
-        ingress=[paws.ec2.SecurityGroupEgressArgs(
-            from_port=0,
-            to_port=0,
-            protocol='-1',
-            cidr_blocks=[config.vpc['cidr']]
-        )]
-    )
-    return efs_sec
-
 def define_efs(config: AWSPulumiConfig, vpc_data: dict) -> dict:
-    efs_sec = _define_security_group(config, vpc_data)
+    ingress = {
+        'from_port': 0,
+        'to_port': 0,
+        'protocol': '-1',
+        'cidr_ip': config.vpc['cidr']
+    }
+    efs_sec = common.create_security_group(
+        resource_prefix=config.resource_prefix,
+        vpc_id=vpc_data['vpc_id'],
+        ingress_data=[ingress],
+        identifier='efs'
+    )
 
     efs = paws.efs.FileSystem(config.resource_prefix,
         creation_token=config.resource_prefix,

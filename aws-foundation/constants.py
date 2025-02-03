@@ -1,7 +1,7 @@
 
 class Constants:
     
-    REQUIRED_TAGS = ('cb-owner', 'cb-user', 'cb-environment', 'cb-purpose')
+    REQUIRED_TAGS = ('user', 'environment', 'purpose')
     MIN_PUBLIC_SUBNETS = 1
     MIN_PRIVATE_SUBNETS = 1
 

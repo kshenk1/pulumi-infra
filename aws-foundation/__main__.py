@@ -22,6 +22,17 @@ register_auto_tags(config.tags)
 
 vpc_data = vpc.define_vpc(config)
 
+if config.ec2_enabled():
+    import modules.ec2 as ec2
+    instance = ec2.define_ec2(config, vpc_data)
+
+    if config.lb_enabled():
+        import modules.load_balancing as lb
+        import modules.route53 as route53
+        load_balancer = lb.define_lb(config, vpc_data, instance)
+
+        route53.define_dns(config, load_balancer.dns_name)
+
 if config.efs_enabled():
     efs_data = efs.define_efs(config, vpc_data)
 
