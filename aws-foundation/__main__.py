@@ -1,5 +1,5 @@
 """An AWS Python Pulumi program"""
-
+import os
 import pulumi
 import modules.vpc as vpc
 import modules.efs as efs
@@ -25,6 +25,13 @@ config.add_tags({
 
 # This pretty much enables the tagging of everything
 register_auto_tags(config.tags)
+
+def get_readme(stack):
+    _readme = f'data/doc-readme/{stack}.md'
+    if os.path.isfile(_readme):
+        with open(_readme, 'r') as f:
+            return f.read()
+    return 'No documentation found'
 
 if stack == 'foundation':
     vpc_data = vpc.define_vpc(config)
@@ -69,4 +76,4 @@ if stack.endswith('-eks'):
 
         addons = eks.define_addons(config, k8s_provider, node_groups)
 
-pulumi.export('readme', 'Documentation for things goes here')
+pulumi.export('readme', get_readme(stack))

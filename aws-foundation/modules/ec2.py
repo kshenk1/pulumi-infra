@@ -13,7 +13,7 @@ def define_ec2(config: AWSPulumiConfig, vpc_data: dict) -> list:
             'protocol': i.get('protocol'),
             'cidr_ip': i.get('cidr_ip') if i.get('cidr_ip') else vpc_data['vpc_cidr']
         })
-        
+
     sec_group = common.create_security_group(
         resource_prefix=config.resource_prefix,
         vpc_id=vpc_data['vpc_id'], 
@@ -38,6 +38,8 @@ def define_ec2(config: AWSPulumiConfig, vpc_data: dict) -> list:
             vpc_security_group_ids=[sec_group.id],
         )
         instances.append(instance)
+
+    pulumi.export("instance_ids", pulumi.Output.all(*[instance.id for instance in instances]))
 
     return instances
 
