@@ -36,7 +36,7 @@ aws:
   lb:
     enabled: !!bool false
     type: 'application'
-    certificate_arn: 'arn:aws:acm:us-east-1:169478657138:certificate/57ddaf65-b367-48e5-b548-26d5271b06e0'
+    certificate_arn: 'arn:aws:acm:us-east-1:1234567890:certificate/tnu7457u-b6ub3-48e5-b548-h57j467j467'
     security_group:
       rules:
         ingress:

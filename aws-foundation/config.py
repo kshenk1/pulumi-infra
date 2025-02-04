@@ -5,7 +5,7 @@ from constants import Constants as CONST
 class AWSPulumiConfig(object):
 
     def __init__(self, stack_name: str) -> object:
-        config_file = f'stack-config.{stack_name}.yaml'
+        config_file = f'stack-configs/sc-{stack_name}.yaml'
 
         with open(file=config_file, mode="r", encoding="utf-8") as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
