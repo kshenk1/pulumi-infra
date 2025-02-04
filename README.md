@@ -46,11 +46,11 @@ python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-cp stack-config.example.yaml stack-config.yaml
+cp stack-config.example.yaml stack-config.foundation.yaml
 
-## Make any modifications you need to stack-config.yaml
+## Make any modifications you need to stack-config.foundation.yaml
 
-pulumi stack init <resource_prefix from stack-condig.yaml>
+pulumi stack init foundation
 pulumi up
 ```
 > [!NOTE]

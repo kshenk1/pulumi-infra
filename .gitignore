@@ -1,2 +1,11 @@
 
+aws-foundation/*.pyc
+aws-foundation/.venv/
+aws-foundation/venv/
+aws-foundation/**/__pycache__/
+
+## Stack configs
+aws-foundation/stack-configs/sc-*.yaml
+!aws-foundation/stack-configs/sc-*.example.yaml
+
 .envrc

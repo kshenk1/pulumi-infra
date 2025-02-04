@@ -3,12 +3,18 @@ import pulumi_aws as paws
 import modules.common as common
 from config import AWSPulumiConfig
 
-def define_lb(config: AWSPulumiConfig, vpc_data: dict, instance: paws.ec2.Instance) -> paws.lb.LoadBalancer:
+def define_lb(config: AWSPulumiConfig, vpc_data: dict, instances: list) -> paws.lb.LoadBalancer:
+    def _get_subnet_ids(pub, priv) -> list:
+        combined_subnet_ids = pulumi.Output.all(pub, priv).apply(
+            lambda lists: lists[0] + lists[1]
+        )
+        return combined_subnet_ids
+    
     lb_sec = common.create_security_group(
         resource_prefix=config.resource_prefix, 
         vpc_id=vpc_data['vpc_id'], 
         ingress_data=config.lb.get('security_group').get('rules')['ingress'], 
-        identifier='ALB'
+        identifier='alb'
     )
 
     lb = paws.lb.LoadBalancer(f'{config.resource_prefix}-lb',
@@ -16,7 +22,7 @@ def define_lb(config: AWSPulumiConfig, vpc_data: dict, instance: paws.ec2.Instan
         enable_deletion_protection=False,
         idle_timeout=5,
         internal=False,
-        name_prefix=config.resource_prefix,
+        name_prefix=config.resource_prefix[0:5],
         security_groups=[lb_sec.id],
         subnets=_get_subnet_ids(vpc_data['public_subnets'], vpc_data['private_subnets'])
     )
@@ -43,15 +49,16 @@ def define_lb(config: AWSPulumiConfig, vpc_data: dict, instance: paws.ec2.Instan
         }
     )
 
-    attachment = paws.lb.TargetGroupAttachment(
-        f'{config.resource_prefix}-tg-attachment',
-        target_group_arn=target_group.arn,
-        target_id=instance.id,
-        port=8080
-    )
+    for index, i in enumerate(instances):
+        paws.lb.TargetGroupAttachment(
+            f'{config.resource_prefix}-tg-attachment-{index }',
+            target_group_arn=target_group.arn,
+            target_id=i.id,
+            port=8080
+        )
 
-    redirect_l = _define_redirect_listener(config, lb)
-    ssl_l = _define_ssl_listener(config, lb, target_group)
+    _define_redirect_listener(config, lb)
+    _define_ssl_listener(config, lb, target_group)
 
     pulumi.export('lb_dns_name', lb.dns_name)
     pulumi.export('lb_arn', lb.arn)
@@ -92,11 +99,3 @@ def _define_redirect_listener(config: AWSPulumiConfig, lb: paws.lb.LoadBalancer)
     )
     return listener
 
-def _get_subnet_ids(pub, priv) -> list:
-    ids = []
-    for p in pub:
-        ids.append(p.id)
-    for p in priv:
-        ids.append(p.id)
-
-    return ids

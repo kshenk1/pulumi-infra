@@ -2,6 +2,7 @@ import pulumi
 import pulumi_aws as paws
 import pulumi_eks as peks
 import pulumi_kubernetes as pk8s
+import modules.common as common
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 from config import AWSPulumiConfig
 from constants import Constants as CONST
@@ -156,21 +157,18 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
     cluster_policy_attachments = _attachments['attachments']
     cluster_role = _attachments['cluster_role']
 
-    sec_group = paws.ec2.SecurityGroup(f'{config.resource_prefix}-eks',
+    ingress = [{
+        'from_port': 0,
+        'to_port': 0,
+        'protocol': '-1',
+        'cidr_ip': [config.vpc['cidr']]
+    }]
+
+    sec_group = common.create_security_group(
+        resource_prefix=config.resource_prefix,
         vpc_id=vpc['vpc_id'],
-        name_prefix=config.resource_prefix,
-        egress=[paws.ec2.SecurityGroupEgressArgs(
-            from_port=0,
-            to_port=0,
-            protocol="-1",
-            cidr_blocks=["0.0.0.0/0"]
-        )],
-        ingress=[paws.ec2.SecurityGroupEgressArgs(
-            from_port=0,
-            to_port=0,
-            protocol='-1',
-            cidr_blocks=[config.vpc['cidr']]
-        )]
+        ingress_data=ingress,
+        identifier='eks'
     )
 
     ## The standard node group policy...
