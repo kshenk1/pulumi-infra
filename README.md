@@ -3,10 +3,13 @@
 > [!IMPORTANT]
 > This README will walk through the steps necessary to create an EKS Cluster in AWS that is _NOT_ opinionated in anyway towards CI or CD. This is, however; opinionated in regards to how to create an EKS cluster, with what tools, and what permissions in order for things to work. 
 
+> [!NOTE]
+> Currently this project has 3 _pre-configured_ stacks: `foundation`, `jenkins-ec2`, and `std-eks`. These only require minor changes such as IP addresses, your username, etc. The `std-eks` stack provisions a fully-functional EKS cluster with 4 nodes as a default (2 in 2 different private subnets) and is completed with 2 autoscaling groups. 
+
 ## Pulumi
 Let's cut right to the chase: [Terraform vs Pulumi](https://www.pulumi.com/docs/concepts/vs/terraform/). Read up a bit, and come back. This was my initial journey with pulumi....
 
-### All configuration is driven from the `stack-config.yaml` file.
+### All configuration is driven from the `stack-configs/sc-*.yaml` files.
 **The `ROOT` directory to refer to during this doc is `pulumi-infra/aws-foundation`.**
 
 `__main__.py` is the entrypoint for Pulumi. In `config.py` we read in that yaml file which dictates how resources are created.
@@ -14,14 +17,17 @@ Let's cut right to the chase: [Terraform vs Pulumi](https://www.pulumi.com/docs/
 ## VPC Configuration
 You can define the vpc CIDR, subnet size, and number of public/private subnets. 
 
-### EFS Configuration
+## EFS Configuration
 If `efs.enabled`: One EFS is created at this time.
 
-### EKS Configuration
-If `eks.enabled`: One EKS Cluster is created, driven by the specifications made available in the `stack-config.yaml`
+## EKS Configuration
+If `eks.enabled`: One EKS Cluster is created, driven by the specifications made available in the `stack-configs/sc-std-eks.example.yaml` file.
 
 ### RDS Configuration
 If `rds.enabled`: One RDS _database_ is created. I have only tested **mysql** so far... You can choose to bring up an RDS **Instance**, or **Cluster** via `rds.aws_rds_type` which can be any of: `[ cluster | instance ]`.
+
+## EC2 Configuration
+If `ec2.enabled`: `ec2.count` number of instances are created (safety cap at 10). Currently this is geared towards installing jenkins.
 
 # How to make it all go
 * [Install Pulumi](https://www.pulumi.com/docs/install/)
@@ -46,13 +52,10 @@ python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-cp stack-config.example.yaml stack-config.foundation.yaml
+cp stack-configs/sc-foundation.example.yaml stack-configs/sc-foundation.yaml
 
-## Make any modifications you need to stack-config.foundation.yaml
+## Make any modifications you need to stack-configs/sc-foundation.yaml
 
 pulumi stack init foundation
 pulumi up
 ```
-> [!NOTE]
-> About `<resource_prefix from stack-condig.yaml>`: This can be whatever you want it to be, and could represent different infrastructure depending on how you want to manage that infrastructure.
-

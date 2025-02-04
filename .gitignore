@@ -9,3 +9,4 @@ aws-foundation/stack-configs/sc-*.yaml
 !aws-foundation/stack-configs/sc-*.example.yaml
 
 .envrc
+.DS_Store
