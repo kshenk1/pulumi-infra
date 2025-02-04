@@ -1,6 +1,8 @@
 
 class Constants:
     
+    INSTANCE_COUNT_LIMIT = 10
+
     REQUIRED_TAGS = ('user', 'environment', 'purpose')
     MIN_PUBLIC_SUBNETS = 1
     MIN_PRIVATE_SUBNETS = 1

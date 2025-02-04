@@ -1,0 +1,10 @@
+
+persistence:
+  enabled: true
+  storageClass: jenkins-pv
+  accessMode: "ReadWriteMany"
+  size: "8Gi"
+
+serviceAccount:
+  create: false
+  name: jenkins

@@ -70,8 +70,6 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
         tags=config.tags | {'Name': _name},
         enable_dns_hostnames=True)
 
-    pulumi.export('vpc_id', vpc.id)
-
     subnets = __slice_vpc_into_subnets(config.vpc['cidr'], config.vpc['subnet_size'])
 
     if not subnets:
@@ -128,6 +126,14 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
         pub_rta = paws.ec2.RouteTableAssociation(f'{config.resource_prefix}-rta-{index+index_start}',
             subnet_id=pub_sub,
             route_table_id=pub_rt.id)
+
+    vpc_data = {
+        'vpc_id': vpc.id,
+        'vpc_cidr': config.vpc['cidr'],
+        'public_subnets': [s.id for s in public_subs],
+        'private_subnets': [s.id for s in private_subs]
+    }
+    pulumi.export('vpc_data', vpc_data)
 
     return {
         'vpc_id': vpc.id,

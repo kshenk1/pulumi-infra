@@ -1,6 +1,8 @@
 ---
 my_ip: &my_ip '192.168.1.10/32'
-resource_prefix: 'my-app'
+
+## Resource prefix is the stack name by default. Setting it here is an override
+#resource_prefix: 'my-app'
 hosted_zone: example.net
 domain_name: &domain_name my-app.example.net
 zone_alias_id: Zone-alias-id-for-cname-aliasing

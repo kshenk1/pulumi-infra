@@ -4,4 +4,6 @@ aws-foundation/.venv/
 aws-foundation/venv/
 aws-foundation/**/__pycache__/
 aws-foundation/stack-config.yaml
+aws-foundation/stack-config.*.yaml
+!aws-foundation/stack-config.example.yaml
 .envrc
