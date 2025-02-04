@@ -1,7 +1,5 @@
 import pulumi
 import pulumi_aws as paws
-from config import AWSPulumiConfig
-
 import random
 import string
 
