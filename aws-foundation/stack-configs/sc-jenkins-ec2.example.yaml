@@ -1,0 +1,46 @@
+---
+my_ip: &my_ip '1.2.3.4/32'
+hosted_zone: example.net
+domain_name: jenkins.example.net
+zone_alias_id: Z35SXDOTRQ7X7K
+aws:
+  tags:
+    user: 'your-username'
+    environment: 'development'
+    purpose: 'testing'
+
+  ec2:
+    enabled: !!bool true
+    count: 1
+    instance_type: 't3a.xlarge'
+    iam_instance_profile: 'instance-profile-with-ssm-managed-core'
+    ami: 'ami-0c614dee691cbbf37' # amz linux 2023
+    key_name: 'keypair-name'
+    security_group:
+      rules:
+        ingress:
+          - protocol: 'tcp'
+            from_port: 8080
+            to_port: 8080
+    tags:
+      Name: 'jenkins'
+
+  lb:
+    enabled: !!bool true
+    type: 'application'
+    certificate_arn: 'arn:aws:acm:us-east-1:1234567890:certificate/tnu7457u-b6ub3-48e5-b548-h57j467j467'
+    security_group:
+      rules:
+        ingress:
+          - protocol: 'tcp'
+            from_port: 80
+            to_port: 80
+            cidr_ip: *my_ip
+          - protocol: 'tcp'
+            from_port: 443
+            to_port: 443
+            cidr_ip: *my_ip
+          - protocol: 'icmp'
+            from_port: -1
+            to_port: -1
+            cidr_ip: *my_ip

@@ -1,0 +1,15 @@
+---
+aws:
+  tags:
+    user: 'your-username'
+    environment: 'development'
+    purpose: 'testing'
+
+  ## Currently, changing anything here after infra is stood up will cause just about
+  ## everything to be rebuilt/recreated
+  vpc:
+    cidr: '192.168.0.0/16'
+    subnet_size: 24 # We will attempt to use the vpc.cidr to carve out subnets of this size
+    num_private_subnets: 2 # the number of private subnets we'll attempt to create
+    num_public_subnets: 2 # the number of PUBLIC subnets we'll attempt to create
+    

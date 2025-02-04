@@ -1,31 +1,28 @@
 ---
-my_ip: &my_ip '192.168.1.10/32'
-
-## Resource prefix is the stack name by default. Setting it here is an override
-#resource_prefix: 'my-app'
+my_ip: &my_ip '1.2.3.4/32'
 hosted_zone: example.net
-domain_name: &domain_name my-app.example.net
-zone_alias_id: Zone-alias-id-for-cname-aliasing
+domain_name: jenkins.example.net
+zone_alias_id: Z35SXDOTRQ7X7K
 aws:
   tags:
-    user: '<a-user>'
+    user: 'your-username'
     environment: 'development'
     purpose: 'testing'
 
   ## Currently, changing anything here after infra is stood up will cause just about
   ## everything to be rebuilt/recreated
   vpc:
-    cidr: '172.31.0.0/16'
+    cidr: &vpc_cidr '192.168.0.0/16'
     subnet_size: 24 # We will attempt to use the vpc.cidr to carve out subnets of this size
     num_private_subnets: 2 # the number of private subnets we'll attempt to create
     num_public_subnets: 2 # the number of PUBLIC subnets we'll attempt to create
 
   ec2:
-    enabled: !!bool true
-    instance_type: 't3a.medium'
-    iam_instance_profile: 'iam-profile-name'
-    ami: 'ami-id'
-    key_name: 'your-ec2-key-name'
+    enabled: !!bool false
+    instance_type: 't3a.xlarge'
+    iam_instance_profile: 'instance-profile-with-ssm-managed-core'
+    ami: 'ami-0c614dee691cbbf37' # amz linux 2023
+    key_name: 'keypair-name'
     security_group:
       rules:
         ingress:
@@ -34,12 +31,12 @@ aws:
             to_port: 8080
             cidr_ip: *vpc_cidr
     tags:
-      Name: *domain_name
+      Name: 'jenkins'
 
   lb:
-    enabled: !!bool true
+    enabled: !!bool false
     type: 'application'
-    certificate_arn: 'arn:aws:acm:us-east-1:1234567890:certificate/4v46hv-ryheryyh-vehy-vt7u-ve5h645745'
+    certificate_arn: 'arn:aws:acm:us-east-1:169478657138:certificate/57ddaf65-b367-48e5-b548-26d5271b06e0'
     security_group:
       rules:
         ingress:
@@ -51,6 +48,10 @@ aws:
             from_port: 443
             to_port: 443
             cidr_ip: *my_ip
+          - protocol: 'icmp'
+            from_port: -1
+            to_port: -1
+            cidr_ip: *my_ip
 
   efs:
     enabled: !!bool true
@@ -61,7 +62,7 @@ aws:
 
   eks:
     enabled: !!bool true
-    version: '1.29'
+    version: '1.31'
     desired_nodes_per_group: 2 # used for desired AND min
     max_nodes_per_group: 10
     ## The number of NODE GROUPS created depends on the number of subnets. 1 group per subnet will be created.
@@ -84,10 +85,10 @@ aws:
     ## aws eks describe-addon-versions --kubernetes-version x.xx --addon-name the-addon-name
     addons:
       - name: aws-ebs-csi-driver
-        version: v1.29.1-eksbuild.1
+        version: v1.39.0-eksbuild.1
 
   rds:
-    enabled: !!bool true
+    enabled: !!bool false
     aws_rds_type: instance ## or cluster, if you want a multi-az cluster instead
     storage: 75
     storage_type: gp3

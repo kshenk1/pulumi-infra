@@ -3,7 +3,18 @@ aws-foundation/*.pyc
 aws-foundation/.venv/
 aws-foundation/venv/
 aws-foundation/**/__pycache__/
-aws-foundation/stack-config.yaml
-aws-foundation/stack-config.*.yaml
-!aws-foundation/stack-config.example.yaml
+
+## Stack configs
+#aws-foundation/sc-foundation.yaml
+#aws-foundation/sc-jenkins-ec2.yaml
+aws-foundation/sc-*.yaml
+
+!aws-foundation/sc-*.example.yaml
+
+
+
+#aws-foundation/stack-config.*.yaml
+#!aws-foundation/stack-config.example.yaml
+#!aws-foundation/stack-config.foundation.yaml
+
 .envrc
