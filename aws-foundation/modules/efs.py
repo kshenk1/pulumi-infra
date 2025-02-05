@@ -6,16 +6,16 @@ from config import AWSPulumiConfig
 from modules.eks import k8sProvider
 
 def define_efs(config: AWSPulumiConfig, vpc_data: dict) -> dict:
-    ingress = {
+    ingress = [{
         'from_port': 0,
         'to_port': 0,
         'protocol': '-1',
         'cidr_ip': config.vpc['cidr']
-    }
+    }]
     efs_sec = common.create_security_group(
         resource_prefix=config.resource_prefix,
         vpc_id=vpc_data['vpc_id'],
-        ingress_data=[ingress],
+        ingress_data=ingress,
         identifier='efs'
     )
 
