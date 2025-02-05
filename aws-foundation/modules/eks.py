@@ -36,20 +36,6 @@ class k8sProvider(pulumi.ComponentResource):
         
         raise ValueError('You should not be here')
 
-def get_datafile(filename: str) -> str:
-    parent_dir = os.path.abspath(os.getcwd())
-    data_dir = os.path.join(parent_dir, 'data')
-    data_file = os.path.join(data_dir, filename)
-
-    if not os.path.isfile(data_file):
-        raise OSError(f'{data_file} not found')
-    
-    with open(data_file, 'r') as f:
-        if data_file.endswith('yaml'):
-            return yaml.safe_load(f)
-        else:
-            return f.read()
-
 def __write_kubeconfig(config: AWSPulumiConfig):
     pulumi.export('kubeconfig_update_command', f'aws eks update-kubeconfig --name {config.resource_prefix} --alias {config.resource_prefix}')
 
@@ -71,11 +57,11 @@ def __policy_attachments(resource_prefix: str, type: str, role: pulumi.Output, s
 
 def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
     cluster_role = paws.iam.Role(f'{resource_prefix}-cluster',
-        assume_role_policy=get_datafile(CONST.FILE_CLUSTER_ROLE_POLICY))
+        assume_role_policy=common.get_datafile(CONST.FILE_CLUSTER_ROLE_POLICY))
     
     efs_policy = paws.iam.Policy(f'{resource_prefix}-efs-csi-driver-policy',
         name_prefix=resource_prefix,
-        policy=get_datafile(CONST.FILE_EFS_CSI_DRIVER_POLICY)
+        policy=common.get_datafile(CONST.FILE_EFS_CSI_DRIVER_POLICY)
     )
     _efs_att = paws.iam.RolePolicyAttachment(f'{resource_prefix}-efs-att',
         role=cluster_role.name,
@@ -84,7 +70,7 @@ def __cluster_role_attachments(resource_prefix: str, tags: list) -> dict:
 
     autoscaling_policy = paws.iam.Policy(f'{resource_prefix}-autoscaling',
         name_prefix=resource_prefix,
-        policy=get_datafile(CONST.FILE_AUTOSCALING_POLICY)
+        policy=common.get_datafile(CONST.FILE_AUTOSCALING_POLICY)
     )
     _auto_att = paws.iam.RolePolicyAttachment(f'{resource_prefix}-auto-att',
         role=cluster_role.name,
@@ -176,7 +162,7 @@ def define_cluster(config: AWSPulumiConfig, vpc: dict) -> dict:
     ## Exception: A managed node group cannot be created without first setting its role in the cluster's instanceRoles
     node_role = paws.iam.Role(f'{config.resource_prefix}-nodegroup',
         name=f'{config.resource_prefix}-nodegroup',
-        assume_role_policy=get_datafile(CONST.FILE_NODEGROUP_ROLE_POLICY))
+        assume_role_policy=common.get_datafile(CONST.FILE_NODEGROUP_ROLE_POLICY))
 
     _tags = config.tags | {'Name': config.resource_prefix}
     cluster_args = peks.ClusterArgs(
