@@ -11,6 +11,8 @@ def define_ec2(config: AWSPulumiConfig, vpc_data: dict) -> list:
             'from_port': i.get('from_port'),
             'to_port': i.get('to_port'),
             'protocol': i.get('protocol'),
+            # What this means is: if we didn't specify a cidr_ip for this entry in the config, 
+            # #then we'll default to allowing traffic from the VPC CIDR block.
             'cidr_ip': i.get('cidr_ip') if i.get('cidr_ip') else vpc_data['vpc_cidr']
         })
 

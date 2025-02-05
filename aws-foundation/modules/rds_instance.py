@@ -1,27 +1,8 @@
 import pulumi
 import pulumi_aws as paws
 from config import AWSPulumiConfig
-from constants import Constants as CONST
-import os
+import modules.common as common
 
-def _define_security_group(config: AWSPulumiConfig, vpc_id: str) -> pulumi.Output:
-    sec_group = paws.ec2.SecurityGroup(f'{config.resource_prefix}-rds',
-        vpc_id=vpc_id,
-        name_prefix=config.resource_prefix,
-        egress=[paws.ec2.SecurityGroupEgressArgs(
-            from_port=0,
-            to_port=0,
-            protocol="-1",
-            cidr_blocks=["0.0.0.0/0"]
-        )],
-        ingress=[paws.ec2.SecurityGroupEgressArgs(
-            from_port=config.rds['port'],
-            to_port=config.rds['port'],
-            protocol='tcp',
-            cidr_blocks=[config.vpc['cidr']]
-        )]
-    )
-    return sec_group
 
 def _define_db_subnet_group(config: AWSPulumiConfig, subnets: list) -> pulumi.Output:
     subnet_group = paws.rds.SubnetGroup(config.resource_prefix,
@@ -49,7 +30,19 @@ def define_rds(config: AWSPulumiConfig, vpc_data: dict) -> pulumi.Output:
 def define_rds_instance(config: AWSPulumiConfig, vpc_data: dict) -> pulumi.Output:
     parameter_group = _define_parameter_group(config)
     subnet_group = _define_db_subnet_group(config, vpc_data['private_subnets'])
-    security_group = _define_security_group(config, vpc_data['vpc_id'])
+
+    ingress_rules = [{
+        'from_port': config.rds['port'],
+        'to_port': config.rds['port'],
+        'protocol': 'tcp',
+        'cidr_ip': [config.vpc['cidr']]
+    }]
+    security_group = common.create_security_group(
+        resource_prefix=config.resource_prefix,
+        vpc_id=vpc_data['vpc_id'], 
+        ingress_data=ingress_rules, 
+        identifier='rds'
+    )
 
     db_instance = paws.rds.Instance(config.resource_prefix,
         allocated_storage=config.rds['storage'],
