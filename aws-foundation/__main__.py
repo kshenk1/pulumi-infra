@@ -46,20 +46,20 @@ if stack == 'jenkins-ec2':
             load_balancer = lb.define_lb(config, vpc_data, instances)
             route53.define_dns(config, load_balancer.dns_name)
 
+if config.rds_enabled():
+    if config.instance_requested():
+        import modules.rds_instance as rds
+    elif config.cluster_requested():
+        import modules.rds_cluster as rds
+    else:
+        raise ValueError('Unable to load an RDS module. Check your rds.aws_rds_type value')
+
+    rds_install = rds.define_rds(config, vpc_data)
+
+if config.efs_enabled():
+    efs_data = efs.define_efs(config, vpc_data)
+
 if stack.endswith('-eks'):
-    if config.efs_enabled():
-        efs_data = efs.define_efs(config, vpc_data)
-
-    if config.rds_enabled():
-        if config.instance_requested():
-            import modules.rds_instance as rds
-        elif config.cluster_requested():
-            import modules.rds_cluster as rds
-        else:
-            raise ValueError('Unable to load an RDS module. Check your rds.aws_rds_type value')
-
-        rds_install = rds.define_rds(config, vpc_data)
-
     if config.eks_enabled():
         _data = eks.define_cluster(config, vpc_data)
         cluster_obj = _data['cluster']

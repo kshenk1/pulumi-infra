@@ -47,13 +47,13 @@ class AWSPulumiConfig(object):
         return self.ec2.get('enabled')
 
     def rds_enabled(self) -> bool:
-        return self.rds.get('enabled')
+        return self.rds.get('enabled') if self.rds else False
     
     def eks_enabled(self) -> bool:
         return self.eks.get('enabled')
     
     def efs_enabled(self) -> bool:
-        return self.efs.get('enabled')
+        return self.efs.get('enabled') if self.efs else False
     
     def lb_controller_enabled(self) -> bool:
         return self.eks.get('loadbalancer_controller').get('enabled')

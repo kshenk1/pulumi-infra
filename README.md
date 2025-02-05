@@ -1,9 +1,7 @@
 # Pulumi AWS VPC Foundation
 
-> [!IMPORTANT]
-> This README will walk through the steps necessary to create an EKS Cluster in AWS that is _NOT_ opinionated in anyway towards CI or CD. This is, however; opinionated in regards to how to create an EKS cluster, with what tools, and what permissions in order for things to work. 
-
 > [!NOTE]
+> This README will walk through the steps necessary to create an EKS Cluster in AWS using Pulumi with python. 
 > Currently this project has 3 _pre-configured_ stacks: `foundation`, `jenkins-ec2`, and `std-eks`. These only require minor changes such as IP addresses, your username, etc. The `std-eks` stack provisions a fully-functional EKS cluster with 4 nodes as a default (2 in 2 different private subnets) and is completed with 2 autoscaling groups. 
 
 ## Pulumi
@@ -12,7 +10,7 @@ Let's cut right to the chase: [Terraform vs Pulumi](https://www.pulumi.com/docs/
 ### All configuration is driven from the `stack-configs/sc-*.yaml` files.
 **The `ROOT` directory to refer to during this doc is `pulumi-infra/aws-foundation`.**
 
-`__main__.py` is the entrypoint for Pulumi. In `config.py` we read in that yaml file which dictates how resources are created.
+`__main__.py` is the entrypoint for Pulumi. In `config.py` we read in a yaml file depending on the stack which dictates how resources are created.
 
 ## VPC Configuration
 You can define the vpc CIDR, subnet size, and number of public/private subnets. 
