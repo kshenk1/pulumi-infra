@@ -26,17 +26,26 @@ def define_efs(config: AWSPulumiConfig, vpc_data: dict) -> dict:
         )]
     )
 
-    mount_targets = []
-    for i, s in enumerate(vpc_data['private_subnets']):
-        efs_mount = paws.efs.MountTarget(f'{config.resource_prefix}-{i}',
-            file_system_id=efs.id,
-            security_groups=[efs_sec.id],
-            subnet_id=s
-        )
-        mount_targets.append(efs_mount)
+    mount_targets = vpc_data['private_subnets'].apply(
+        lambda subnets: [
+            paws.efs.MountTarget(
+                f"{config.resource_prefix}-{subnet_id[:-4]}",
+                file_system_id=efs.id,
+                security_groups=[efs_sec.id],
+                subnet_id=subnet_id
+            )
+            for subnet_id in subnets
+        ]
+    )
+
+    # mount_target_dns_names = mount_targets.apply(
+    #     lambda targets: [target.mount_target_dns_name for target in targets]
+    # )
+
+    # Export the list to Pulumi output
+    #pulumi.export('mount_target_dns_names', mount_target_dns_names)
 
     pulumi.export('efs_fs_id', efs.id)
-    pulumi.export('efs_mount_targets', [mt.mount_target_dns_name for mt in mount_targets])
 
     return {
         'mount_targets': mount_targets,

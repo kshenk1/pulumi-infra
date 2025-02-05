@@ -21,12 +21,14 @@ def get_datafile(filename: str) -> str:
 
 def create_security_group(resource_prefix: str, vpc_id: str, ingress_data: list, egress_data=[], identifier=None) -> paws.ec2.SecurityGroup:
     rand_str        = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-    default_egress  = [paws.ec2.SecurityGroupEgressArgs(
-        from_port=0,
-        to_port=0,
-        protocol="-1",
-        cidr_blocks=["0.0.0.0/0"],
-    )]
+    default_egress  = [
+        paws.ec2.SecurityGroupEgressArgs(
+            from_port=0,
+            to_port=0,
+            protocol="-1",
+            cidr_blocks=["0.0.0.0/0"],
+        )
+    ]
     ingress = [
         paws.ec2.SecurityGroupIngressArgs(
             from_port=i['from_port'],
