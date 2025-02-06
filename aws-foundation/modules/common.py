@@ -4,11 +4,12 @@ import random
 import string
 import os
 import yaml
+from constants import Constants as CONST
 
 def get_datafile(filename: str) -> str:
-    parent_dir = os.path.abspath(os.getcwd())
-    data_dir = os.path.join(parent_dir, 'data')
-    data_file = os.path.join(data_dir, filename)
+    parent_dir  = os.path.abspath(os.getcwd())
+    data_dir    = os.path.join(parent_dir, CONST.PATH_DATA)
+    data_file   = os.path.join(data_dir, filename)
 
     if not os.path.isfile(data_file):
         raise OSError(f'{data_file} not found')

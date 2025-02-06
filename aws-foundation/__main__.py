@@ -11,11 +11,12 @@ import modules.route53 as route53
 from modules.autotag import register_auto_tags
 from config import AWSPulumiConfig
 from pulumi import StackReference
+from constants import Constants as CONST
 # NOTE CONDITIONAL IMPORTS BELOW FOR RDS
 
+project = pulumi.get_project()
 org     = pulumi.get_organization()
 stack   = pulumi.get_stack()
-project = pulumi.get_project()
 config  = AWSPulumiConfig(stack)
 
 config.add_tags({
@@ -27,7 +28,7 @@ config.add_tags({
 register_auto_tags(config.tags)
 
 def get_readme(stack):
-    _readme = f'data/doc-readme/{stack}.md'
+    _readme = os.path.join(CONST.PATH_README, f'{stack}.md')
     if os.path.isfile(_readme):
         with open(_readme, 'r') as f:
             return f.read()
