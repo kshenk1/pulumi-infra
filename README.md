@@ -46,10 +46,6 @@ kshenk1
 git clone git@github.com:kshenk1/pulumi-infra.git
 cd pulumi-infra/aws-foundation
 
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
 cp stack-configs/sc-foundation.example.yaml stack-configs/sc-foundation.yaml
 
 ## Make any modifications you need to stack-configs/sc-foundation.yaml
