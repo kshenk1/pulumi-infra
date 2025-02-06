@@ -41,25 +41,25 @@ class AWSPulumiConfig(object):
         return self.rds.get('aws_rds_type') == 'cluster'
 
     def lb_enabled(self) -> bool:
-        return self.lb.get('enabled')
+        return self.lb.get('enabled') if self.lb else False
 
     def ec2_enabled(self) -> bool:
-        return self.ec2.get('enabled')
+        return self.ec2.get('enabled') if self.ec2 else False
 
     def rds_enabled(self) -> bool:
         return self.rds.get('enabled') if self.rds else False
     
     def eks_enabled(self) -> bool:
-        return self.eks.get('enabled')
+        return self.eks.get('enabled') if self.eks else False
     
     def efs_enabled(self) -> bool:
         return self.efs.get('enabled') if self.efs else False
     
     def lb_controller_enabled(self) -> bool:
-        return self.eks.get('loadbalancer_controller').get('enabled')
+        return self.eks.get('loadbalancer_controller').get('enabled') if self.eks else False
     
     def efs_csi_driver_enabled(self) -> bool:
-        return self.efs.get('csi_driver').get('enabled')
+        return self.efs.get('csi_driver').get('enabled') if self.efs else False
 
     def __validation(self, config) -> bool:
         tags = config.get('aws')['tags']
@@ -68,7 +68,7 @@ class AWSPulumiConfig(object):
             if not tags.get(t):
                 e.append(f'Tag: {t} is missing!')
 
-        if config.get('aws').get('ec2') and self.ec2_enabled():
+        if self.ec2_enabled():
             if self.ec2.get('count') > CONST.INSTANCE_COUNT_LIMIT:
                 e.append(f'Instance count cannot exceed {CONST.INSTANCE_COUNT_LIMIT}')
 
@@ -85,7 +85,7 @@ class AWSPulumiConfig(object):
             if int(config.get('aws').get('vpc')['num_private_subnets']) < CONST.MIN_PRIVATE_SUBNETS:
                 e.append(f'There needs to be at least {CONST.MIN_PRIVATE_SUBNETS} private subnet(s)')
 
-        if config.get('aws').get('rds') and config.get('aws').get('rds').get('enabled'):
+        if self.rds_enabled():
             self.rds['fqdn_internal'] = f"{self.rds['subdomain']}.{config.get('resource_prefix')}.{self.rds['tld']}"
 
             _rds_type = self.rds.get('aws_rds_type')

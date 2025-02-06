@@ -35,7 +35,7 @@ def define_lb(config: AWSPulumiConfig, vpc_data: dict, instances: list) -> paws.
         vpc_id=vpc_data['vpc_id'],
         health_check={
             "enabled": True,
-            "healthy_threshold": 5,
+            "healthy_threshold": 2,
             "interval": 10,
             "matcher": "200",
             "path": "/login",
