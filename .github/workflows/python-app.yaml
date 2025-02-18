@@ -28,4 +28,4 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest aws-foundation
+        pytest aws-foundation/tests --verbose --disable-pytest-warnings
