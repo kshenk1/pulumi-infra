@@ -1,5 +1,7 @@
 # Pulumi AWS VPC Foundation
 
+![Build & Test](https://github.com/kshenk1/pulumi-infra/actions/workflows/python-app.yaml/badge.svg)
+
 > [!NOTE]
 > This README will walk through the steps necessary to create an EKS Cluster in AWS using Pulumi with python. 
 > Currently this project has 3 _pre-configured_ stacks: `foundation`, `jenkins-ec2`, and `std-eks`. These only require minor changes such as IP addresses, your username, etc. The `std-eks` stack provisions a fully-functional EKS cluster with 4 nodes as a default (2 in 2 different private subnets) and is completed with 2 autoscaling groups. 
