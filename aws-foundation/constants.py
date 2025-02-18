@@ -4,7 +4,7 @@ class Constants:
     
     PATH_DATA           = 'data'
     PATH_STACK_CONFIGS  = 'stack-configs'
-    PATH_README         = join(['data', 'doc-readme'])
+    PATH_README         = join('data', 'doc-readme')
 
     INSTANCE_COUNT_LIMIT = 10
 
