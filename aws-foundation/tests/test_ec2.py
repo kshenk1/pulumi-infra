@@ -1,9 +1,9 @@
 import pulumi
 import sys, os
 
-from mocks import Ec2Mocks
+from mocks import MyPulumiMocks
 
-pulumi.runtime.set_mocks(Ec2Mocks(), preview=False)
+pulumi.runtime.set_mocks(MyPulumiMocks(), preview=False)
 
 # Now actually import the code that creates resources, and then test it.
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

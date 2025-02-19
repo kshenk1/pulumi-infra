@@ -135,16 +135,5 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
     }
     pulumi.export('vpc_data', vpc_data)
 
-    return {
-        'vpc_id': vpc.id,
-        'vpc_cidr': config.vpc['cidr'],
-        'public_subnets': [s.id for s in public_subs],
-        'private_subnets': [s.id for s in private_subs]
-    }
+    return vpc_data
 
-    # return {
-    #     'vpc_id': vpc.id,
-    #     'vpc_cidr': config.vpc['cidr'],
-    #     'public_subnets': public_subs,
-    #     'private_subnets': private_subs
-    # }
