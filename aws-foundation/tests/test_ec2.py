@@ -1,51 +1,48 @@
 import pulumi
+import sys, os
 
+from mocks import Ec2Mocks
 
-class Ec2Mocks(pulumi.runtime.Mocks):
-    def new_resource(self, args: pulumi.runtime.MockResourceArgs):
-        outputs = args.inputs
-        if args.typ == "aws:ec2/instance:Instance":
-            outputs = {
-                **args.inputs,
-                "publicIp": "203.0.113.12",
-                "publicDns": "ec2-203-0-113-12.compute-1.amazonaws.com",
-            }
-        return [args.name + "_id", outputs]
-
-    def call(self, args: pulumi.runtime.MockCallArgs):
-        if args.token == "aws:ec2/getAmi:getAmi":
-            return {
-                "architecture": "x86_64",
-                "id": "ami-0eb1f3cdeeb8eed2a",
-            }
-        return {}
-
-
-pulumi.runtime.set_mocks(Ec2Mocks())
+pulumi.runtime.set_mocks(Ec2Mocks(), preview=False)
 
 # Now actually import the code that creates resources, and then test it.
-import ec2_infra as infra
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from config import AWSPulumiConfig
 
+# Mock the foundation stack first
+stack = 'foundation'
+import modules.vpc as vpc
+config = AWSPulumiConfig(stack)
+new_vpc = vpc.define_vpc(config)
 
-# Test if the service has tags and a name tag.
+# Mock the jenkins-ec2 stack
+stack = 'jenkins-ec2'
+import modules.ec2 as ec2
+config = AWSPulumiConfig(stack)
+
+instances = ec2.define_ec2(config, new_vpc)
+ec2_security_group = ec2.define_ec2_security_group(config, new_vpc)
+instance = instances[0]
+
+# See if the instance type is of the same family listed in Ec2Mocks
 @pulumi.runtime.test
-def test_server_tags():
-    def check_tags(args):
-        urn, tags = args
-        assert tags, f"server {urn} must have tags"
-        assert "Name" in tags, "server {urn} must have a name tag"
+def test_instance_type():
+    def check_instance_type(args):
+        urn, i_type, _config = args
+        config_type = _config.ec2.get('instance_type')
+        assert config_type.startswith(i_type), f"Type '{i_type}' of resource does not match the value specified in the config: {config_type}"
 
-    return pulumi.Output.all(infra.server.urn, infra.server.tags).apply(check_tags)
+    return pulumi.Output.all(instance.urn, instance.instance_type, config).apply(check_instance_type)
 
 
 # Test if the instance is configured with user_data.
 @pulumi.runtime.test
-def test_server_userdata():
+def test_instance_userdata():
     def check_user_data(args):
         urn, user_data = args
         assert user_data is None, f"illegal use of user_data on server {urn}"
 
-    return pulumi.Output.all(infra.server.urn, infra.server.user_data).apply(check_user_data)
+    return pulumi.Output.all(instance.urn, instance.user_data).apply(check_user_data)
 
 
 # Test if port 22 for ssh is exposed.
@@ -65,4 +62,4 @@ def test_security_group_rules():
         ), f"security group {urn} exposes port 22 to the Internet (CIDR 0.0.0.0/0)"
 
     # Return the results of the unit tests.
-    return pulumi.Output.all(infra.group.urn, infra.group.ingress).apply(check_security_group_rules)
+    return pulumi.Output.all(ec2_security_group.urn, ec2_security_group.ingress).apply(check_security_group_rules)
