@@ -138,6 +138,13 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
     return {
         'vpc_id': vpc.id,
         'vpc_cidr': config.vpc['cidr'],
-        'public_subnets': public_subs,
-        'private_subnets': private_subs
+        'public_subnets': [s.id for s in public_subs],
+        'private_subnets': [s.id for s in private_subs]
     }
+
+    # return {
+    #     'vpc_id': vpc.id,
+    #     'vpc_cidr': config.vpc['cidr'],
+    #     'public_subnets': public_subs,
+    #     'private_subnets': private_subs
+    # }

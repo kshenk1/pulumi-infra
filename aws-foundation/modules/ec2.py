@@ -3,11 +3,11 @@ import pulumi_aws as paws
 import modules.common as common
 from config import AWSPulumiConfig
 
-def define_ec2(config: AWSPulumiConfig, vpc_data: dict) -> list:
-    _ingresses = []
-    instances = []
+def define_ec2_security_group(config: AWSPulumiConfig, vpc_data: dict) -> paws.ec2.SecurityGroup:
+    ingresses = []
+    
     for i in config.ec2.get('security_group').get('rules')['ingress']:
-        _ingresses.append({
+        ingresses.append({
             'from_port': i.get('from_port'),
             'to_port': i.get('to_port'),
             'protocol': i.get('protocol'),
@@ -16,12 +16,16 @@ def define_ec2(config: AWSPulumiConfig, vpc_data: dict) -> list:
             'cidr_ip': i.get('cidr_ip') if i.get('cidr_ip') else vpc_data['vpc_cidr']
         })
 
-    sec_group = common.create_security_group(
+    return common.create_security_group(
         resource_prefix=config.resource_prefix,
         vpc_id=vpc_data['vpc_id'], 
-        ingress_data=_ingresses, 
+        ingress_data=ingresses, 
         identifier=config.ec2.get('tags')['Name']
     )
+
+def define_ec2(config: AWSPulumiConfig, vpc_data: dict) -> list:
+    instances = []
+    sec_group = define_ec2_security_group(config, vpc_data)
 
     for i in range(config.ec2.get('count')):
         instance = paws.ec2.Instance(f"{config.resource_prefix}-{config.ec2.get('tags')['Name']}-{i}",
