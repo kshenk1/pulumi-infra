@@ -1,10 +1,10 @@
-from os.path import join
+import os
 
 class Constants:
     
-    PATH_DATA           = 'data'
-    PATH_STACK_CONFIGS  = 'stack-configs'
-    PATH_README         = join('data', 'doc-readme')
+    PATH_DATA           = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
+    PATH_STACK_CONFIGS  = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'stack-configs')
+    PATH_README         = os.path.join(PATH_DATA, 'doc-readme')
 
     INSTANCE_COUNT_LIMIT = 10
 
