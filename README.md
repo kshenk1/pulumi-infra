@@ -55,3 +55,8 @@ cp stack-configs/sc-foundation.example.yaml stack-configs/sc-foundation.yaml
 pulumi stack init foundation
 pulumi up
 ```
+
+## Testing
+`pytest` is used for writing tests. For the github actions, the example `stack-configs` are used for testing... Specifically `foundation` and `jenkins-ec2`.
+
+See [Unit Testing Pulumi Programs](https://www.pulumi.com/docs/iac/concepts/testing/unit/) for more information on how this works.
