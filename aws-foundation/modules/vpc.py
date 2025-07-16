@@ -10,7 +10,7 @@ def __slice_vpc_into_subnets(vpc_cidr: str, subnet_bits: int) -> list:
 
     if (vpc_net.prefixlen >= subnet_bits):
         print(f'Subnet size ({subnet_bits}) must be greater than the VPC network ({vpc_net.prefixlen})')
-        return False
+        return []
 
     subs = [str(s) for s in vpc_net.subnets(new_prefix=subnet_bits)]
     

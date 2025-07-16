@@ -3,6 +3,14 @@ import pulumi_aws as paws
 import modules.common as common
 from config import AWSPulumiConfig
 
+def define_lb_security_group(config: AWSPulumiConfig, vpc_data: dict) -> paws.ec2.SecurityGroup:
+    return common.create_security_group(
+        resource_prefix=config.resource_prefix, 
+        vpc_id=vpc_data['vpc_id'], 
+        ingress_data=config.lb.get('security_group').get('rules')['ingress'], 
+        identifier='alb'
+    )
+
 def define_lb(config: AWSPulumiConfig, vpc_data: dict, instances: list) -> paws.lb.LoadBalancer:
     def _get_subnet_ids(pub, priv) -> list:
         combined_subnet_ids = pulumi.Output.all(pub, priv).apply(
@@ -10,12 +18,7 @@ def define_lb(config: AWSPulumiConfig, vpc_data: dict, instances: list) -> paws.
         )
         return combined_subnet_ids
     
-    lb_sec = common.create_security_group(
-        resource_prefix=config.resource_prefix, 
-        vpc_id=vpc_data['vpc_id'], 
-        ingress_data=config.lb.get('security_group').get('rules')['ingress'], 
-        identifier='alb'
-    )
+    lb_sec = define_lb_security_group(config, vpc_data)
 
     lb = paws.lb.LoadBalancer(f'{config.resource_prefix}-lb',
         load_balancer_type=config.lb.get('type'),

@@ -1,0 +1,6 @@
+config:
+  esc-iac:myEnvironment: development
+  esc-iac:myPassword:
+    secure: AAABAJjqe/X9n40f9do7t8jUqKfcXx1gEkIZjovfzBkNT9UYpJzM2PR0S8u8JPZOZw==
+environment:
+  - aws-foundation/dev
