@@ -1,8 +1,8 @@
 import pulumi
 import os, sys
-from mocks import Ec2Mocks
+from mocks import MyPulumiMocks
 
-pulumi.runtime.set_mocks(Ec2Mocks(), preview=False)
+pulumi.runtime.set_mocks(MyPulumiMocks(), preview=False)
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import AWSPulumiConfig

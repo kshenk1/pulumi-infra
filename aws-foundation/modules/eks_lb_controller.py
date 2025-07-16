@@ -26,9 +26,9 @@ def define_lb_controller(config: AWSPulumiConfig, k8s_provider: k8sProvider, nod
 
     lb_chart = common.get_datafile(CONST.FILE_LB_CONTROLLER_VALUES)
 
-    lb_chart['values'].update({'clusterName': cluster.eks_cluster})
-    lb_chart['values'].update({'vpcId': vpc_id})
-    lb_chart['values']['serviceAccount']['annotations'].update({
+    lb_chart['values'].update({'clusterName': cluster.eks_cluster}) # type: ignore
+    lb_chart['values'].update({'vpcId': vpc_id})                    # type: ignore
+    lb_chart['values']['serviceAccount']['annotations'].update({    # type: ignore
         'eks.amazonaws.com/role-arn': service_account_role.arn
     })
 

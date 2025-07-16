@@ -10,7 +10,7 @@ def __slice_vpc_into_subnets(vpc_cidr: str, subnet_bits: int) -> list:
 
     if (vpc_net.prefixlen >= subnet_bits):
         print(f'Subnet size ({subnet_bits}) must be greater than the VPC network ({vpc_net.prefixlen})')
-        return False
+        return []
 
     subs = [str(s) for s in vpc_net.subnets(new_prefix=subnet_bits)]
     
@@ -135,16 +135,5 @@ def define_vpc(config: AWSPulumiConfig) -> dict:
     }
     pulumi.export('vpc_data', vpc_data)
 
-    return {
-        'vpc_id': vpc.id,
-        'vpc_cidr': config.vpc['cidr'],
-        'public_subnets': [s.id for s in public_subs],
-        'private_subnets': [s.id for s in private_subs]
-    }
+    return vpc_data
 
-    # return {
-    #     'vpc_id': vpc.id,
-    #     'vpc_cidr': config.vpc['cidr'],
-    #     'public_subnets': public_subs,
-    #     'private_subnets': private_subs
-    # }

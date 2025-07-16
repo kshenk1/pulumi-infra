@@ -7,9 +7,7 @@ import yaml
 from constants import Constants as CONST
 
 def get_datafile(filename: str) -> str:
-    parent_dir  = os.path.abspath(os.getcwd())
-    data_dir    = os.path.join(parent_dir, CONST.PATH_DATA)
-    data_file   = os.path.join(data_dir, filename)
+    data_file   = os.path.join(CONST.PATH_DATA, filename)
 
     if not os.path.isfile(data_file):
         raise OSError(f'{data_file} not found')
@@ -21,7 +19,7 @@ def get_datafile(filename: str) -> str:
             return f.read()
 
 def create_security_group(resource_prefix: str, vpc_id: str, ingress_data: list, egress_data=[], identifier=None) -> paws.ec2.SecurityGroup:
-    rand_str        = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    rand_str        = ''.join(random.choices(string.ascii_letters + string.digits, k=CONST.RANDOM_STR_LENGTH))
     default_egress  = [
         paws.ec2.SecurityGroupEgressArgs(
             from_port=0,

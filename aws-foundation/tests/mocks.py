@@ -1,6 +1,7 @@
 import pulumi
 
-class Ec2Mocks(pulumi.runtime.Mocks):
+
+class MyPulumiMocks(pulumi.runtime.Mocks):
     def new_resource(self, args: pulumi.runtime.MockResourceArgs):
         outputs = args.inputs
         if args.typ == "aws:ec2/vpc:Vpc":
@@ -18,16 +19,19 @@ class Ec2Mocks(pulumi.runtime.Mocks):
         return [args.name + "_id", outputs]
 
     def call(self, args: pulumi.runtime.MockCallArgs):
+        ret = {}
+        
         if args.token == "aws:ec2/getAmi:getAmi":
-            return {
+            ret = {
                 "architecture": "x86_64",
                 "id": "ami-0eb1f3cdeeb8eed2a",
             }
-        if "getAvailabilityZones" in args.token:
-            return {
+        elif "getAvailabilityZones" in args.token:
+            ret = {
                 "names": ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d"],
                 "zone_ids": ["use1-az1", "use1-az2", "use1-az3", "use1-az4"],
                 "state": "available",
             }
-        return {}
+
+        return ret
     

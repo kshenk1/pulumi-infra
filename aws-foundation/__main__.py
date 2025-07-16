@@ -10,7 +10,6 @@ import modules.load_balancing as lb
 import modules.route53 as route53
 from modules.autotag import register_auto_tags
 from config import AWSPulumiConfig
-from pulumi import StackReference
 from constants import Constants as CONST
 # NOTE CONDITIONAL IMPORTS BELOW FOR RDS
 
@@ -37,7 +36,7 @@ def get_readme(stack):
 if stack == 'foundation':
     vpc_data = vpc.define_vpc(config)
 else:
-    stack_ref = StackReference(f'{org}/{project}/foundation')
+    stack_ref = pulumi.StackReference(f'{org}/{project}/foundation')
     vpc_data = stack_ref.get_output('vpc_data')
 
 if stack == 'jenkins-ec2':

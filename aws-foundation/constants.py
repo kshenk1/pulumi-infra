@@ -2,11 +2,13 @@ import os
 
 class Constants:
     
-    PATH_DATA           = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
-    PATH_STACK_CONFIGS  = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'stack-configs')
+    PATH_PROJECT_ROOT   = os.path.abspath(os.path.dirname(__file__))
+    PATH_DATA           = os.path.join(PATH_PROJECT_ROOT, 'data')
+    PATH_STACK_CONFIGS  = os.path.join(PATH_PROJECT_ROOT, 'stack-configs')
     PATH_README         = os.path.join(PATH_DATA, 'doc-readme')
 
     INSTANCE_COUNT_LIMIT = 10
+    RANDOM_STR_LENGTH = 8
 
     REQUIRED_TAGS = ('user', 'environment', 'purpose')
     MIN_PUBLIC_SUBNETS = 1

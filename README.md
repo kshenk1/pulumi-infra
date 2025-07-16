@@ -6,6 +6,9 @@
 > This README will walk through the steps necessary to create an EKS Cluster in AWS using Pulumi with python. 
 > Currently this project has 3 _pre-configured_ stacks: `foundation`, `jenkins-ec2`, and `std-eks`. These only require minor changes such as IP addresses, your username, etc. The `std-eks` stack provisions a fully-functional EKS cluster with 4 nodes as a default (2 in 2 different private subnets) and is completed with 2 autoscaling groups. 
 
+> [!WARNING]
+> Currently the stack names and stack configs are tightly coupled, intentionally. This may not work for you depending on your usecase.
+
 ## Pulumi
 Let's cut right to the chase: [Terraform vs Pulumi](https://www.pulumi.com/docs/concepts/vs/terraform/). Read up a bit, and come back. This was my initial journey with pulumi....
 
@@ -55,3 +58,8 @@ cp stack-configs/sc-foundation.example.yaml stack-configs/sc-foundation.yaml
 pulumi stack init foundation
 pulumi up
 ```
+
+## Testing
+`pytest` is used for writing tests. For the github actions, the example `stack-configs` are used for testing... Specifically `foundation` and `jenkins-ec2`.
+
+See [Unit Testing Pulumi Programs](https://www.pulumi.com/docs/iac/concepts/testing/unit/) for more information on how this works.
